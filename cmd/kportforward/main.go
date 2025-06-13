@@ -11,6 +11,7 @@ import (
 	"github.com/victorkazakov/kportforward/internal/config"
 	"github.com/victorkazakov/kportforward/internal/portforward"
 	"github.com/victorkazakov/kportforward/internal/ui"
+	"github.com/victorkazakov/kportforward/internal/ui_handlers"
 	"github.com/victorkazakov/kportforward/internal/updater"
 	"github.com/victorkazakov/kportforward/internal/utils"
 )
@@ -19,6 +20,10 @@ var (
 	version = "dev"
 	commit  = "none"
 	date    = "unknown"
+
+	// CLI flags
+	enableGRPCUI    bool
+	enableSwaggerUI bool
 )
 
 func main() {
@@ -29,6 +34,10 @@ func main() {
 with a modern terminal UI, automatic recovery, and built-in update system.`,
 		Run: runPortForward,
 	}
+
+	// Add CLI flags
+	rootCmd.Flags().BoolVar(&enableGRPCUI, "grpcui", false, "Enable gRPC UI for RPC services")
+	rootCmd.Flags().BoolVar(&enableSwaggerUI, "swaggerui", false, "Enable Swagger UI for REST services")
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",
@@ -57,8 +66,31 @@ func runPortForward(cmd *cobra.Command, args []string) {
 	logger := utils.NewLogger(utils.LevelInfo)
 	logger.Info("Starting kportforward with %d services", len(cfg.PortForwards))
 
+	// Initialize UI handlers
+	var grpcUIManager *ui_handlers.GRPCUIManager
+	var swaggerUIManager *ui_handlers.SwaggerUIManager
+
+	if enableGRPCUI {
+		grpcUIManager = ui_handlers.NewGRPCUIManager(logger)
+		if err := grpcUIManager.Enable(); err != nil {
+			logger.Warn("Failed to enable gRPC UI: %v", err)
+			grpcUIManager = nil
+		}
+	}
+
+	if enableSwaggerUI {
+		swaggerUIManager = ui_handlers.NewSwaggerUIManager(logger)
+		if err := swaggerUIManager.Enable(); err != nil {
+			logger.Warn("Failed to enable Swagger UI: %v", err)
+			swaggerUIManager = nil
+		}
+	}
+
 	// Create port forward manager
 	manager := portforward.NewManager(cfg, logger)
+
+	// Set UI handlers on the manager
+	manager.SetUIHandlers(grpcUIManager, swaggerUIManager)
 
 	// Set up signal handling for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
@@ -106,6 +138,19 @@ func runPortForward(cmd *cobra.Command, args []string) {
 
 	if err := tui.Stop(); err != nil {
 		logger.Error("Error stopping TUI: %v", err)
+	}
+
+	// Stop UI handlers explicitly
+	if grpcUIManager != nil {
+		if err := grpcUIManager.Disable(); err != nil {
+			logger.Error("Error stopping gRPC UI manager: %v", err)
+		}
+	}
+
+	if swaggerUIManager != nil {
+		if err := swaggerUIManager.Disable(); err != nil {
+			logger.Error("Error stopping Swagger UI manager: %v", err)
+		}
 	}
 
 	if err := manager.Stop(); err != nil {

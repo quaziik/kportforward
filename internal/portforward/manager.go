@@ -11,6 +11,14 @@ import (
 	"github.com/victorkazakov/kportforward/internal/utils"
 )
 
+// UIHandler interface for UI managers
+type UIHandler interface {
+	StartService(serviceName string, serviceStatus config.ServiceStatus, serviceConfig config.Service) error
+	StopService(serviceName string) error
+	MonitorServices(services map[string]config.ServiceStatus, configs map[string]config.Service)
+	IsEnabled() bool
+}
+
 // Manager coordinates multiple port-forward services
 type Manager struct {
 	services          map[string]*ServiceManager
@@ -20,6 +28,10 @@ type Manager struct {
 	cancel            context.CancelFunc
 	mutex             sync.RWMutex
 	kubernetesContext string
+
+	// UI Handlers
+	grpcUIHandler    UIHandler
+	swaggerUIHandler UIHandler
 
 	// Monitoring
 	monitoringTicker *time.Ticker
@@ -38,6 +50,14 @@ func NewManager(cfg *config.Config, logger *utils.Logger) *Manager {
 		cancel:     cancel,
 		statusChan: make(chan map[string]config.ServiceStatus, 1),
 	}
+}
+
+// SetUIHandlers sets the UI handlers for the manager
+func (m *Manager) SetUIHandlers(grpcUI, swaggerUI UIHandler) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	m.grpcUIHandler = grpcUI
+	m.swaggerUIHandler = swaggerUI
 }
 
 // Start initializes and starts all port-forward services
@@ -84,6 +104,23 @@ func (m *Manager) Stop() error {
 	// Stop monitoring
 	if m.monitoringTicker != nil {
 		m.monitoringTicker.Stop()
+	}
+
+	// Stop UI handlers
+	if m.grpcUIHandler != nil && m.grpcUIHandler.IsEnabled() {
+		for serviceName := range m.services {
+			if err := m.grpcUIHandler.StopService(serviceName); err != nil {
+				m.logger.Error("Failed to stop gRPC UI for %s: %v", serviceName, err)
+			}
+		}
+	}
+
+	if m.swaggerUIHandler != nil && m.swaggerUIHandler.IsEnabled() {
+		for serviceName := range m.services {
+			if err := m.swaggerUIHandler.StopService(serviceName); err != nil {
+				m.logger.Error("Failed to stop Swagger UI for %s: %v", serviceName, err)
+			}
+		}
 	}
 
 	// Stop all services
@@ -182,11 +219,32 @@ func (m *Manager) monitorServices() {
 		}
 	}
 
+	// Monitor UI handlers
+	m.monitorUIHandlers(statusMap)
+
 	// Send status update (non-blocking)
 	select {
 	case m.statusChan <- statusMap:
 	default:
 		// Channel is full, skip this update
+	}
+}
+
+// monitorUIHandlers monitors UI handlers and manages their lifecycle
+func (m *Manager) monitorUIHandlers(statusMap map[string]config.ServiceStatus) {
+	m.mutex.RLock()
+	grpcHandler := m.grpcUIHandler
+	swaggerHandler := m.swaggerUIHandler
+	m.mutex.RUnlock()
+
+	// Monitor gRPC UI handler
+	if grpcHandler != nil && grpcHandler.IsEnabled() {
+		grpcHandler.MonitorServices(statusMap, m.config.PortForwards)
+	}
+
+	// Monitor Swagger UI handler
+	if swaggerHandler != nil && swaggerHandler.IsEnabled() {
+		swaggerHandler.MonitorServices(statusMap, m.config.PortForwards)
 	}
 }
 
