@@ -21,14 +21,14 @@ type TUI struct {
 // NewTUI creates a new terminal user interface
 func NewTUI(statusChan <-chan map[string]config.ServiceStatus) *TUI {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	model := NewModel(statusChan)
 	program := tea.NewProgram(
 		model,
 		tea.WithAltScreen(),       // Use alternate screen buffer
 		tea.WithMouseCellMotion(), // Enable mouse support
 	)
-	
+
 	return &TUI{
 		program:    program,
 		model:      model,
@@ -47,7 +47,7 @@ func (t *TUI) Start() error {
 			fmt.Printf("TUI error: %v\n", err)
 		}
 	}()
-	
+
 	return nil
 }
 

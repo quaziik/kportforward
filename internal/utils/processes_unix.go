@@ -18,7 +18,7 @@ func StartKubectlPortForward(namespace, target string, localPort, targetPort int
 	}
 
 	cmd := exec.Command("kubectl", args...)
-	
+
 	// Set up process group for proper cleanup on Unix systems
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,

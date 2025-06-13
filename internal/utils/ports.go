@@ -42,7 +42,7 @@ func CheckPortConnectivity(port int) bool {
 func ResolvePortConflicts(services map[string]ServiceConfig) (map[string]int, error) {
 	portAssignments := make(map[string]int)
 	usedPorts := make(map[int]bool)
-	
+
 	// First pass: assign ports that are available
 	for name, service := range services {
 		if IsPortAvailable(service.LocalPort) && !usedPorts[service.LocalPort] {
@@ -50,7 +50,7 @@ func ResolvePortConflicts(services map[string]ServiceConfig) (map[string]int, er
 			usedPorts[service.LocalPort] = true
 		}
 	}
-	
+
 	// Second pass: resolve conflicts by finding alternative ports
 	for name, service := range services {
 		if _, assigned := portAssignments[name]; !assigned {
@@ -62,7 +62,7 @@ func ResolvePortConflicts(services map[string]ServiceConfig) (map[string]int, er
 			usedPorts[newPort] = true
 		}
 	}
-	
+
 	return portAssignments, nil
 }
 

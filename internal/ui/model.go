@@ -25,7 +25,7 @@ const (
 
 var sortFieldNames = map[SortField]string{
 	SortByName:   "Name",
-	SortByStatus: "Status", 
+	SortByStatus: "Status",
 	SortByType:   "Type",
 	SortByPort:   "Port",
 	SortByUptime: "Uptime",
@@ -47,21 +47,21 @@ type Model struct {
 	kubeContext     string
 	lastUpdate      time.Time
 	updateAvailable bool
-	
+
 	// UI state
 	selectedIndex int
 	sortField     SortField
 	sortReverse   bool
 	viewMode      ViewMode
-	
+
 	// Display settings
-	width         int
-	height        int
-	refreshRate   time.Duration
-	
+	width       int
+	height      int
+	refreshRate time.Duration
+
 	// Channels
-	statusChan    <-chan map[string]config.ServiceStatus
-	contextChan   <-chan string
+	statusChan  <-chan map[string]config.ServiceStatus
+	contextChan <-chan string
 }
 
 // StatusUpdateMsg represents a status update message
@@ -79,14 +79,14 @@ type TickMsg time.Time
 // NewModel creates a new TUI model
 func NewModel(statusChan <-chan map[string]config.ServiceStatus) *Model {
 	return &Model{
-		services:     make(map[string]config.ServiceStatus),
-		serviceNames: make([]string, 0),
+		services:      make(map[string]config.ServiceStatus),
+		serviceNames:  make([]string, 0),
 		selectedIndex: 0,
-		sortField:    SortByName,
-		sortReverse:  false,
-		viewMode:     ViewTable,
-		refreshRate:  250 * time.Millisecond,
-		statusChan:   statusChan,
+		sortField:     SortByName,
+		sortReverse:   false,
+		viewMode:      ViewTable,
+		refreshRate:   250 * time.Millisecond,
+		statusChan:    statusChan,
 	}
 }
 
@@ -223,13 +223,13 @@ func (m *Model) handleDetailKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) renderTableView() string {
 	// Header
 	header := m.renderHeader()
-	
+
 	// Table
 	table := m.renderTable()
-	
+
 	// Footer
 	footer := m.renderFooter()
-	
+
 	// Combine all parts
 	content := lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -239,7 +239,7 @@ func (m *Model) renderTableView() string {
 		"",
 		footer,
 	)
-	
+
 	return containerStyle.
 		Width(m.width - 4).
 		Height(m.height - 2).
@@ -274,7 +274,7 @@ func (m *Model) renderDetailView() string {
 	}
 
 	if service.LastError != "" {
-		details = append(details, 
+		details = append(details,
 			"",
 			"Last Error:",
 			errorMessageStyle.Render(service.LastError),
@@ -287,7 +287,7 @@ func (m *Model) renderDetailView() string {
 	)
 
 	content := strings.Join(details, "\n")
-	
+
 	return containerStyle.
 		Width(m.width - 4).
 		Height(m.height - 2).
@@ -297,17 +297,17 @@ func (m *Model) renderDetailView() string {
 // renderHeader renders the header section
 func (m *Model) renderHeader() string {
 	title := titleStyle.Render("kportforward")
-	
+
 	context := ""
 	if m.kubeContext != "" {
 		context = contextStyle.Render(fmt.Sprintf("Context: %s", m.kubeContext))
 	}
-	
+
 	updateNotice := ""
 	if m.updateAvailable {
 		updateNotice = lipgloss.NewStyle().Foreground(warningColor).Render("Update Available!")
 	}
-	
+
 	// Calculate running/total services
 	running := 0
 	total := len(m.services)
@@ -316,9 +316,9 @@ func (m *Model) renderHeader() string {
 			running++
 		}
 	}
-	
+
 	status := fmt.Sprintf("Services (%d/%d running)", running, total)
-	
+
 	return headerStyle.Render(
 		lipgloss.JoinHorizontal(
 			lipgloss.Left,
@@ -355,34 +355,34 @@ func (m *Model) renderTable() string {
 	// Table header
 	headers := []string{
 		FormatTableHeader(fmt.Sprintf("%-*s", nameWidth, "Name")),
-		FormatTableHeader(fmt.Sprintf("%-*s", statusWidth, "Status")), 
+		FormatTableHeader(fmt.Sprintf("%-*s", statusWidth, "Status")),
 		FormatTableHeader(fmt.Sprintf("%-*s", urlWidth, "URL")),
 		FormatTableHeader(fmt.Sprintf("%-*s", typeWidth, "Type")),
 		FormatTableHeader(fmt.Sprintf("%-*s", uptimeWidth, "Uptime")),
 		FormatTableHeader(fmt.Sprintf("%-*s", errorWidth, "Error")),
 	}
-	
+
 	headerRow := strings.Join(headers, " ")
-	
+
 	// Table rows
 	rows := []string{headerRow}
-	
+
 	for i, serviceName := range m.serviceNames {
 		service := m.services[serviceName]
 		selected := (i == m.selectedIndex)
-		
+
 		// Format columns
 		nameCol := fmt.Sprintf("%-*s", nameWidth, truncateString(serviceName, nameWidth))
-		
-		statusCol := fmt.Sprintf("%s %-*s", 
+
+		statusCol := fmt.Sprintf("%s %-*s",
 			GetStatusIndicator(service.Status),
-			statusWidth-2, 
+			statusWidth-2,
 			service.Status)
-		
+
 		urlCol := m.formatServiceURL(service, urlWidth)
-		
+
 		typeCol := fmt.Sprintf("%-*s", typeWidth, truncateString(service.Name, typeWidth))
-		
+
 		uptimeCol := ""
 		if !service.StartTime.IsZero() {
 			uptime := time.Since(service.StartTime)
@@ -390,17 +390,17 @@ func (m *Model) renderTable() string {
 		} else {
 			uptimeCol = fmt.Sprintf("%-*s", uptimeWidth, "-")
 		}
-		
+
 		errorCol := fmt.Sprintf("%-*s", errorWidth, truncateString(service.LastError, errorWidth))
-		
+
 		// Combine row
 		rowContent := strings.Join([]string{
 			nameCol, statusCol, urlCol, typeCol, uptimeCol, errorCol,
 		}, " ")
-		
+
 		rows = append(rows, FormatTableRow(rowContent, selected))
 	}
-	
+
 	return strings.Join(rows, "\n")
 }
 
@@ -410,15 +410,15 @@ func (m *Model) renderFooter() string {
 	if m.sortReverse {
 		sortInfo += " (desc)"
 	}
-	
+
 	help := []string{
 		"[↑↓] Navigate",
-		"[Enter] Details", 
+		"[Enter] Details",
 		"[n/s/t/p/u] Sort by Name/Status/Type/Port/Uptime",
 		"[r] Reverse",
 		"[q] Quit",
 	}
-	
+
 	return footerStyle.Render(
 		lipgloss.JoinHorizontal(
 			lipgloss.Left,
@@ -434,12 +434,12 @@ func (m *Model) formatServiceURL(service config.ServiceStatus, maxWidth int) str
 	if service.Status != "Running" {
 		return fmt.Sprintf("%-*s", maxWidth, "-")
 	}
-	
+
 	url := fmt.Sprintf("http://localhost:%d", service.LocalPort)
 	if len(url) > maxWidth {
 		url = truncateString(url, maxWidth)
 	}
-	
+
 	return fmt.Sprintf("%-*s", maxWidth, FormatURL(url))
 }
 
@@ -449,11 +449,11 @@ func (m *Model) updateServiceNames() {
 	for name := range m.services {
 		m.serviceNames = append(m.serviceNames, name)
 	}
-	
+
 	// Sort based on current field
 	sort.Slice(m.serviceNames, func(i, j int) bool {
 		a, b := m.services[m.serviceNames[i]], m.services[m.serviceNames[j]]
-		
+
 		var less bool
 		switch m.sortField {
 		case SortByStatus:
@@ -467,13 +467,13 @@ func (m *Model) updateServiceNames() {
 		default: // SortByName
 			less = m.serviceNames[i] < m.serviceNames[j]
 		}
-		
+
 		if m.sortReverse {
 			return !less
 		}
 		return less
 	})
-	
+
 	// Ensure selected index is still valid
 	if m.selectedIndex >= len(m.serviceNames) {
 		m.selectedIndex = len(m.serviceNames) - 1
@@ -490,7 +490,7 @@ func getServiceType(serviceName string) string {
 	if strings.Contains(serviceName, "rpc") {
 		return "rpc"
 	} else if strings.Contains(serviceName, "web") || strings.Contains(serviceName, "console") {
-		return "web"  
+		return "web"
 	} else if strings.Contains(serviceName, "api") {
 		return "rest"
 	}

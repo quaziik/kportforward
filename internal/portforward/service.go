@@ -13,15 +13,15 @@ import (
 
 // ServiceManager manages the lifecycle of a single port-forward service
 type ServiceManager struct {
-	name      string
-	config    config.Service
-	status    *config.ServiceStatus
-	cmd       *exec.Cmd
-	logger    *utils.Logger
-	mutex     sync.RWMutex
-	ctx       context.Context
-	cancel    context.CancelFunc
-	
+	name   string
+	config config.Service
+	status *config.ServiceStatus
+	cmd    *exec.Cmd
+	logger *utils.Logger
+	mutex  sync.RWMutex
+	ctx    context.Context
+	cancel context.CancelFunc
+
 	// Exponential backoff fields
 	failureCount   int
 	cooldownUntil  time.Time
@@ -31,7 +31,7 @@ type ServiceManager struct {
 // NewServiceManager creates a new service manager
 func NewServiceManager(name string, service config.Service, logger *utils.Logger) *ServiceManager {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	return &ServiceManager{
 		name:           name,
 		config:         service,
@@ -91,7 +91,7 @@ func (sm *ServiceManager) Start() error {
 	sm.status.LastError = ""
 	sm.status.InCooldown = false
 
-	sm.logger.Info("Started port-forward for %s: %s:%d -> %d", 
+	sm.logger.Info("Started port-forward for %s: %s:%d -> %d",
 		sm.name, sm.config.Target, sm.config.TargetPort, actualPort)
 
 	return nil
@@ -119,15 +119,15 @@ func (sm *ServiceManager) Stop() error {
 // Restart stops and starts the service
 func (sm *ServiceManager) Restart() error {
 	sm.logger.Info("Restarting service %s", sm.name)
-	
+
 	if err := sm.Stop(); err != nil {
 		sm.logger.Warn("Error stopping service %s during restart: %v", sm.name, err)
 	}
-	
+
 	sm.mutex.Lock()
 	sm.status.RestartCount++
 	sm.mutex.Unlock()
-	
+
 	return sm.Start()
 }
 
@@ -153,13 +153,13 @@ func (sm *ServiceManager) IsHealthy() bool {
 func (sm *ServiceManager) GetStatus() config.ServiceStatus {
 	sm.mutex.RLock()
 	defer sm.mutex.RUnlock()
-	
+
 	// Update status based on health check
 	if sm.status.Status == "Running" && !sm.IsHealthy() {
 		sm.status.Status = "Failed"
 		sm.status.LastError = "Health check failed"
 	}
-	
+
 	return *sm.status
 }
 
@@ -181,31 +181,31 @@ func (sm *ServiceManager) resolvePort() (int, error) {
 		return 0, err
 	}
 
-	sm.logger.Warn("Port %d is in use for %s, using port %d instead", 
+	sm.logger.Warn("Port %d is in use for %s, using port %d instead",
 		sm.config.LocalPort, sm.name, newPort)
-	
+
 	return newPort, nil
 }
 
 // handleFailure implements exponential backoff for failed services
 func (sm *ServiceManager) handleFailure() {
 	sm.failureCount++
-	
+
 	// Don't set cooldown for the first few failures
 	if sm.failureCount < 3 {
 		return
 	}
-	
+
 	// Calculate backoff index (capped at max)
 	backoffIndex := sm.failureCount - 3
 	if backoffIndex >= len(sm.backoffSeconds) {
 		backoffIndex = len(sm.backoffSeconds) - 1
 	}
-	
+
 	cooldownDuration := time.Duration(sm.backoffSeconds[backoffIndex]) * time.Second
 	sm.cooldownUntil = time.Now().Add(cooldownDuration)
-	
-	sm.logger.Warn("Service %s failed %d times, entering cooldown for %v", 
+
+	sm.logger.Warn("Service %s failed %d times, entering cooldown for %v",
 		sm.name, sm.failureCount, cooldownDuration)
 }
 

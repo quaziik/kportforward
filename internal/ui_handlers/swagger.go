@@ -204,14 +204,14 @@ func (sm *SwaggerUIManager) isDockerAvailable() bool {
 // startSwaggerContainer starts a Docker container with Swagger UI
 func (sm *SwaggerUIManager) startSwaggerContainer(serviceName string, targetPort, swaggerPort int, swaggerPath, apiPath string) (string, string, error) {
 	containerName := fmt.Sprintf("kpf-swagger-%s", strings.ReplaceAll(serviceName, "_", "-"))
-	
+
 	// Stop any existing container with the same name
 	sm.stopContainerByName(containerName)
 
 	// Docker run arguments
 	args := []string{
 		"run",
-		"-d", // Detached mode
+		"-d",   // Detached mode
 		"--rm", // Remove container when it stops
 		"--name", containerName,
 		"-p", fmt.Sprintf("%d:8080", swaggerPort),

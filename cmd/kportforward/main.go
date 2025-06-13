@@ -118,7 +118,7 @@ func runPortForward(cmd *cobra.Command, args []string) {
 
 func displayStatus(status map[string]config.ServiceStatus, kubeContext string) {
 	fmt.Printf("\n=== kportforward Status (Context: %s) ===\n", kubeContext)
-	fmt.Printf("%-25s %-10s %-8s %-8s %-10s %s\n", 
+	fmt.Printf("%-25s %-10s %-8s %-8s %-10s %s\n",
 		"Service", "Status", "Local", "PID", "Uptime", "Error")
 	fmt.Println(string(make([]byte, 80, 80)))
 

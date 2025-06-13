@@ -10,15 +10,15 @@ var (
 	primaryColor   = lipgloss.Color("#00D4AA") // Bright teal
 	secondaryColor = lipgloss.Color("#FF6B6B") // Coral red
 	accentColor    = lipgloss.Color("#4ECDC4") // Light teal
-	
+
 	// Status colors
 	successColor = lipgloss.Color("#55FF55") // Bright green
 	warningColor = lipgloss.Color("#FFAA00") // Orange
 	errorColor   = lipgloss.Color("#FF5555") // Bright red
 	mutedColor   = lipgloss.Color("#888888") // Gray
-	
+
 	// Background colors
-	selectedBg = lipgloss.Color("#2A2A2A") // Dark gray
+	selectedBg  = lipgloss.Color("#2A2A2A") // Dark gray
 	borderColor = lipgloss.Color("#444444") // Medium gray
 )
 
@@ -26,77 +26,77 @@ var (
 var (
 	// Main container style
 	containerStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(borderColor).
-		Padding(0, 1)
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(borderColor).
+			Padding(0, 1)
 
 	// Header style
 	headerStyle = lipgloss.NewStyle().
-		Foreground(primaryColor).
-		Bold(true).
-		Padding(0, 1)
+			Foreground(primaryColor).
+			Bold(true).
+			Padding(0, 1)
 
 	// Title style
 	titleStyle = lipgloss.NewStyle().
-		Foreground(primaryColor).
-		Bold(true)
+			Foreground(primaryColor).
+			Bold(true)
 
-	// Context info style  
+	// Context info style
 	contextStyle = lipgloss.NewStyle().
-		Foreground(accentColor).
-		Italic(true)
+			Foreground(accentColor).
+			Italic(true)
 
 	// Status indicator styles
 	statusRunningStyle = lipgloss.NewStyle().
-		Foreground(successColor).
-		Bold(true)
+				Foreground(successColor).
+				Bold(true)
 
 	statusFailedStyle = lipgloss.NewStyle().
-		Foreground(errorColor).
-		Bold(true)
+				Foreground(errorColor).
+				Bold(true)
 
 	statusStartingStyle = lipgloss.NewStyle().
-		Foreground(warningColor).
-		Bold(true)
+				Foreground(warningColor).
+				Bold(true)
 
 	statusCooldownStyle = lipgloss.NewStyle().
-		Foreground(mutedColor).
-		Bold(true)
+				Foreground(mutedColor).
+				Bold(true)
 
 	// Table styles
 	tableHeaderStyle = lipgloss.NewStyle().
-		Foreground(primaryColor).
-		Bold(true).
-		Underline(true)
+				Foreground(primaryColor).
+				Bold(true).
+				Underline(true)
 
 	tableRowStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFFFFF"))
+			Foreground(lipgloss.Color("#FFFFFF"))
 
 	tableSelectedRowStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFFFFF")).
-		Background(selectedBg).
-		Bold(true)
+				Foreground(lipgloss.Color("#FFFFFF")).
+				Background(selectedBg).
+				Bold(true)
 
 	// URL link style
 	urlStyle = lipgloss.NewStyle().
-		Foreground(accentColor).
-		Underline(true)
+			Foreground(accentColor).
+			Underline(true)
 
 	// Help text style
 	helpStyle = lipgloss.NewStyle().
-		Foreground(mutedColor).
-		Italic(true)
+			Foreground(mutedColor).
+			Italic(true)
 
 	// Error message style
 	errorMessageStyle = lipgloss.NewStyle().
-		Foreground(errorColor).
-		Italic(true)
+				Foreground(errorColor).
+				Italic(true)
 
 	// Footer style
 	footerStyle = lipgloss.NewStyle().
-		Foreground(mutedColor).
-		Italic(true).
-		Padding(0, 1)
+			Foreground(mutedColor).
+			Italic(true).
+			Padding(0, 1)
 )
 
 // GetStatusStyle returns the appropriate style for a service status
