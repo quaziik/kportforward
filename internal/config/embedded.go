@@ -5,5 +5,6 @@ import (
 )
 
 // Embed the default configuration file
+//
 //go:embed default.yaml
 var DefaultConfigYAML []byte

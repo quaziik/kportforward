@@ -30,13 +30,13 @@ type UIConfig struct {
 
 // ServiceStatus represents the runtime status of a service
 type ServiceStatus struct {
-	Name         string
-	Status       string
-	LocalPort    int  // Actual port being used (may differ from config if reassigned)
-	PID          int  // Process ID of kubectl port-forward
-	StartTime    time.Time
-	RestartCount int
-	LastError    string
-	InCooldown   bool
+	Name          string
+	Status        string
+	LocalPort     int // Actual port being used (may differ from config if reassigned)
+	PID           int // Process ID of kubectl port-forward
+	StartTime     time.Time
+	RestartCount  int
+	LastError     string
+	InCooldown    bool
 	CooldownUntil time.Time
 }

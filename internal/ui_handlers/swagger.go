@@ -204,14 +204,14 @@ func (sm *SwaggerUIManager) isDockerAvailable() bool {
 // startSwaggerContainer starts a Docker container with Swagger UI
 func (sm *SwaggerUIManager) startSwaggerContainer(serviceName string, targetPort, swaggerPort int, swaggerPath, apiPath string) (string, string, error) {
 	containerName := fmt.Sprintf("kpf-swagger-%s", strings.ReplaceAll(serviceName, "_", "-"))
-	
+
 	// Stop any existing container with the same name
 	sm.stopContainerByName(containerName)
 
 	// Docker run arguments
 	args := []string{
 		"run",
-		"-d", // Detached mode
+		"-d",   // Detached mode
 		"--rm", // Remove container when it stops
 		"--name", containerName,
 		"-p", fmt.Sprintf("%d:8080", swaggerPort),
@@ -253,7 +253,7 @@ func (sm *SwaggerUIManager) stopContainer(containerID string) error {
 // stopContainerByName stops a Docker container by name
 func (sm *SwaggerUIManager) stopContainerByName(containerName string) error {
 	cmd := exec.Command("docker", "stop", containerName)
-	err := cmd.Run()
+	_ = cmd.Run()
 	// Ignore errors - container might not exist
 	return nil
 }
@@ -272,7 +272,7 @@ func (sm *SwaggerUIManager) isContainerRunning(containerID string) bool {
 // isDockerDesktop checks if we're running Docker Desktop (vs Docker on Linux)
 func (sm *SwaggerUIManager) isDockerDesktop() bool {
 	cmd := exec.Command("docker", "version", "--format", "{{.Server.Os}}")
-	output, err := cmd.Output()
+	_, err := cmd.Output()
 	if err != nil {
 		return true // Assume Docker Desktop if we can't determine
 	}
@@ -308,7 +308,7 @@ func (sm *SwaggerUIManager) MonitorServices(services map[string]config.ServiceSt
 	}
 
 	// Stop Swagger UI for services that are no longer running
-	for serviceName, uiService := range sm.services {
+	for serviceName := range sm.services {
 		serviceStatus, exists := services[serviceName]
 		if !exists || serviceStatus.Status != "Running" {
 			go func(name string) {

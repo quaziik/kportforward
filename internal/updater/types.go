@@ -25,23 +25,23 @@ type Asset struct {
 
 // UpdateInfo contains information about an available update
 type UpdateInfo struct {
-	Available       bool
-	CurrentVersion  string
-	LatestVersion   string
-	ReleaseNotes    string
-	DownloadURL     string
-	AssetSize       int64
-	PublishedAt     time.Time
+	Available      bool
+	CurrentVersion string
+	LatestVersion  string
+	ReleaseNotes   string
+	DownloadURL    string
+	AssetSize      int64
+	PublishedAt    time.Time
 }
 
 // UpdateConfig contains configuration for the updater
 type UpdateConfig struct {
-	RepoOwner       string
-	RepoName        string
-	CurrentVersion  string
-	CheckInterval   time.Duration
-	LastCheckFile   string
-	UpdateChannel   string // "stable" or "beta"
+	RepoOwner      string
+	RepoName       string
+	CurrentVersion string
+	CheckInterval  time.Duration
+	LastCheckFile  string
+	UpdateChannel  string // "stable" or "beta"
 }
 
 // UpdateStatus represents the current update status

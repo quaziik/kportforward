@@ -47,7 +47,7 @@ func (l *Logger) logf(level LogLevel, format string, args ...interface{}) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	levelName := logLevelNames[level]
 	message := fmt.Sprintf(format, args...)
-	
+
 	l.Printf("[%s] %s: %s", timestamp, levelName, message)
 }
 

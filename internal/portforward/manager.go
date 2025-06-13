@@ -13,14 +13,14 @@ import (
 
 // Manager coordinates multiple port-forward services
 type Manager struct {
-	services         map[string]*ServiceManager
-	config           *config.Config
-	logger           *utils.Logger
-	ctx              context.Context
-	cancel           context.CancelFunc
-	mutex            sync.RWMutex
+	services          map[string]*ServiceManager
+	config            *config.Config
+	logger            *utils.Logger
+	ctx               context.Context
+	cancel            context.CancelFunc
+	mutex             sync.RWMutex
 	kubernetesContext string
-	
+
 	// Monitoring
 	monitoringTicker *time.Ticker
 	statusChan       chan map[string]config.ServiceStatus
@@ -29,7 +29,7 @@ type Manager struct {
 // NewManager creates a new port-forward manager
 func NewManager(cfg *config.Config, logger *utils.Logger) *Manager {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	return &Manager{
 		services:   make(map[string]*ServiceManager),
 		config:     cfg,
@@ -95,7 +95,7 @@ func (m *Manager) Stop() error {
 
 	m.cancel()
 	close(m.statusChan)
-	
+
 	m.logger.Info("Stopped all port-forward services")
 	return nil
 }
@@ -140,10 +140,10 @@ func (m *Manager) GetKubernetesContext() string {
 // startMonitoring begins the monitoring loop for all services
 func (m *Manager) startMonitoring() {
 	m.monitoringTicker = time.NewTicker(m.config.MonitoringInterval)
-	
+
 	go func() {
 		defer m.monitoringTicker.Stop()
-		
+
 		for {
 			select {
 			case <-m.ctx.Done():
@@ -166,7 +166,7 @@ func (m *Manager) monitorServices() {
 	m.mutex.RUnlock()
 
 	statusMap := make(map[string]config.ServiceStatus)
-	
+
 	for name, sm := range services {
 		status := sm.GetStatus()
 		statusMap[name] = status
@@ -203,13 +203,13 @@ func (m *Manager) checkKubernetesContext() {
 	m.mutex.RUnlock()
 
 	if newContext != currentContext {
-		m.logger.Info("Kubernetes context changed from %s to %s, restarting all services", 
+		m.logger.Info("Kubernetes context changed from %s to %s, restarting all services",
 			currentContext, newContext)
-		
+
 		m.mutex.Lock()
 		m.kubernetesContext = newContext
 		m.mutex.Unlock()
-		
+
 		// Restart all services in the new context
 		go m.restartAllServices()
 	}
@@ -250,12 +250,12 @@ func (m *Manager) getCurrentKubernetesContext() (string, error) {
 	if err != nil {
 		return "N/A", err
 	}
-	
+
 	// Remove trailing newline
 	context := string(output)
 	if len(context) > 0 && context[len(context)-1] == '\n' {
 		context = context[:len(context)-1]
 	}
-	
+
 	return context, nil
 }

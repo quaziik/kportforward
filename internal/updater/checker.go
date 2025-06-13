@@ -68,7 +68,7 @@ func (c *Checker) CheckForUpdates() (*UpdateInfo, error) {
 
 // getLatestRelease fetches the latest release from GitHub API
 func (c *Checker) getLatestRelease() (*Release, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", 
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest",
 		c.config.RepoOwner, c.config.RepoName)
 
 	resp, err := c.client.Get(url)
@@ -106,7 +106,7 @@ func (c *Checker) compareVersions(release *Release) *UpdateInfo {
 	// Simple version comparison (assumes semantic versioning)
 	if c.isNewerVersion(release.TagName, c.config.CurrentVersion) {
 		updateInfo.Available = true
-		
+
 		// Find appropriate asset for current platform
 		asset := c.findAssetForPlatform(release.Assets)
 		if asset != nil {
@@ -123,12 +123,12 @@ func (c *Checker) isNewerVersion(versionA, versionB string) bool {
 	// Remove 'v' prefix if present
 	versionA = strings.TrimPrefix(versionA, "v")
 	versionB = strings.TrimPrefix(versionB, "v")
-	
+
 	// Handle "dev" version
 	if versionB == "dev" {
 		return true
 	}
-	
+
 	// Simple string comparison for now
 	// In production, you'd want proper semantic version parsing
 	return versionA > versionB
@@ -206,15 +206,15 @@ func (c *Checker) updateLastCheckTime() error {
 // ForceCheck forces an update check regardless of last check time
 func (c *Checker) ForceCheck() (*UpdateInfo, error) {
 	c.logger.Info("Forcing update check...")
-	
+
 	// Temporarily clear last check time to force check
 	originalInterval := c.config.CheckInterval
 	c.config.CheckInterval = 0
-	
+
 	updateInfo, err := c.CheckForUpdates()
-	
+
 	// Restore original interval
 	c.config.CheckInterval = originalInterval
-	
+
 	return updateInfo, err
 }

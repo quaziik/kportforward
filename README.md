@@ -155,6 +155,25 @@ go test ./...
 go run ./cmd/kportforward -v
 ```
 
+### Git Hooks
+
+Install pre-commit hooks to automatically format Go code:
+
+```bash
+# Install git hooks
+./scripts/install-hooks.sh
+```
+
+The pre-commit hook will:
+- Automatically format Go code with `gofmt -s -w` before each commit
+- Add formatted files back to staging
+- Abort the commit if files were formatted (so you can review changes)
+
+To bypass the hook for a specific commit (not recommended):
+```bash
+git commit --no-verify
+```
+
 ## 📱 Terminal UI
 
 ```

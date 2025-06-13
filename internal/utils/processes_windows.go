@@ -17,7 +17,7 @@ func StartKubectlPortForward(namespace, target string, localPort, targetPort int
 	}
 
 	cmd := exec.Command("kubectl", args...)
-	
+
 	// No special process group setup needed on Windows
 
 	err := cmd.Start()
