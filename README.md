@@ -216,11 +216,84 @@ git commit --no-verify
 ### Debug Mode
 
 ```bash
-# Run with verbose logging
-kportforward --verbose
+# Check application version
+kportforward version
+
+# View help and available commands
+kportforward --help
 
 # Check service status manually
 kubectl port-forward -n <namespace> <service> <port>:<port>
+
+# Verify kubectl context
+kubectl config current-context
+```
+
+## 💡 Examples
+
+### Basic Usage
+```bash
+# Start with embedded services
+kportforward
+
+# Use arrow keys to navigate, Enter for details, q to quit
+```
+
+### Custom Configuration
+Create `~/.config/kportforward/config.yaml`:
+```yaml
+portForwards:
+  # Add your microservice
+  user-service:
+    target: "service/user-service"
+    targetPort: 8080
+    localPort: 3001
+    namespace: "production"
+    type: "rest"
+    swaggerPath: "docs/swagger.json"
+    
+  # Add your gRPC service  
+  notification-service:
+    target: "deployment/notification-service"
+    targetPort: 9090
+    localPort: 3002
+    namespace: "production"
+    type: "rpc"
+
+# Override defaults
+monitoringInterval: 3s
+uiOptions:
+  refreshRate: 1s
+```
+
+Then run with UI integrations:
+```bash
+kportforward --grpcui --swaggerui
+```
+
+### Advanced Workflows
+```bash
+# Different contexts
+kubectl config use-context staging
+kportforward --grpcui  # gRPC UI for staging services
+
+kubectl config use-context production  
+kportforward --swaggerui  # Swagger UI for production APIs
+
+# Check what's running
+kportforward version  # Shows current version and update status
+```
+
+### Development Workflow
+```bash
+# Developer working on microservices
+kportforward --grpcui --swaggerui
+
+# Access services:
+# - Embedded services available at configured ports
+# - gRPC UI: http://localhost:9090 (auto-assigned)
+# - Swagger UI: http://localhost:8080 (auto-assigned)
+# - Your APIs accessible through UI tools
 ```
 
 ## 🤝 Contributing

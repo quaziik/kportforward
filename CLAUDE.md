@@ -4,159 +4,266 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-kportforward is a modular Bash tool for macOS that automates managing and monitoring multiple Kubernetes port-forwards. It reads a YAML configuration file, starts the defined port-forwards using `kubectl port-forward`, and continuously monitors their status—automatically restarting any connection that fails. The tool also detects Kubernetes context changes and refreshes the port-forwards accordingly.
+kportforward is a modern, cross-platform Go application that automates managing and monitoring multiple Kubernetes port-forwards. It features a rich terminal UI, automatic recovery, embedded configuration, and built-in update system. The tool reads configuration from embedded defaults (which can be overridden by user config), starts defined port-forwards using `kubectl port-forward`, and continuously monitors their status with automatic restart capabilities.
 
 ## Development Commands
 
 ```bash
-# Make script executable
-chmod +x kportforward.sh
+# Build the application
+go build -o bin/kportforward ./cmd/kportforward
 
-# Test basic functionality
-./kportforward.sh
+# Build for all platforms
+./scripts/build.sh
 
-# Test with UI features
-./kportforward.sh --grpcui --swaggerui
+# Run tests
+go test ./...
 
-# Check script syntax
-bash -n kportforward.sh
-bash -n src/*.sh
+# Run with verbose logging for debugging
+./bin/kportforward --help
+
+# Install git hooks for automatic formatting
+./scripts/install-hooks.sh
+
+# Create a release
+./scripts/release.sh v1.0.0
 ```
 
 ## Key Components
 
-- `kportforward.sh`: The main Bash script that coordinates all functionality
-- `src/config.sh`: Configuration module for dependency checking and YAML parsing
-- `src/utils.sh`: Utility functions for port checking, PID tracking, etc.
-- `src/port_forward.sh`: Module for managing Kubernetes port-forwards
-- `src/ui_handlers.sh`: Module for managing gRPC UI and Swagger UI interfaces
-- `src/display.sh`: Module for terminal display formatting
-- `kportforward.yaml`: Configuration file defining port-forwards to manage
+### Go Package Structure
+- `cmd/kportforward/main.go`: Main application entry point with CLI setup
+- `internal/config/`: Configuration system with embedded defaults and user merging
+  - `config.go`: Configuration loading and merging logic
+  - `embedded.go`: Embedded default configuration using `//go:embed`
+  - `types.go`: Configuration data structures
+- `internal/portforward/`: Port-forward management and monitoring
+  - `manager.go`: Service manager with UI handler integration
+  - `service.go`: Individual service management
+- `internal/ui/`: Modern terminal UI using Bubble Tea framework
+  - `tui.go`: Main TUI application and event handling
+  - `model.go`: UI state management and updates
+  - `styles.go`: Terminal styling and layout
+- `internal/ui_handlers/`: gRPC UI and Swagger UI automation
+  - `grpc.go`: gRPC UI process management
+  - `swagger.go`: Swagger UI Docker container management
+  - Platform-specific implementations (`*_unix.go`, `*_windows.go`)
+- `internal/updater/`: Auto-update system with GitHub releases integration
+- `internal/utils/`: Cross-platform utilities for ports, processes, and logging
+
+### Build and Deployment
+- `scripts/build.sh`: Cross-platform build script (darwin/amd64, darwin/arm64, linux/amd64, windows/amd64)
+- `scripts/release.sh`: Automated release creation with GitHub CLI
+- `scripts/install-hooks.sh`: Git pre-commit hooks for automatic Go formatting
+- `.github/workflows/`: CI/CD automation for build, test, and release
 
 ## Usage Commands
 
-To use the tool:
-
 ```bash
 # Display help information
-./kportforward.sh --help
+./bin/kportforward --help
 
-# Basic usage
-./kportforward.sh
+# Basic usage with embedded configuration
+./bin/kportforward
 
 # With gRPC UI support for RPC services
-./kportforward.sh --grpcui
+./bin/kportforward --grpcui
 
 # With Swagger UI support for REST services
-./kportforward.sh --swaggerui
+./bin/kportforward --swaggerui
 
 # With both gRPC UI and Swagger UI support
-./kportforward.sh --grpcui --swaggerui
+./bin/kportforward --grpcui --swaggerui
+
+# Check version information
+./bin/kportforward version
 ```
 
 ## Dependencies
 
-The tool requires the following tools:
+### Build Dependencies
+- Go 1.21+
+- Git (for version information in builds)
 
+### Runtime Dependencies
 - `kubectl`: Kubernetes CLI for managing clusters
   ```bash
   brew install kubectl
   ```
 
-- `yq`: YAML processor for parsing configuration
-  ```bash
-  brew install yq
-  ```
-
-Optional dependencies:
-
-- `grpcui`: For gRPC web interfaces (when using the `--grpcui` flag)
+### Optional Dependencies
+- `grpcui`: For gRPC web interfaces (when using `--grpcui`)
   ```bash
   go install github.com/fullstorydev/grpcui/cmd/grpcui@latest
   ```
 
-- `netcat (nc)`: Required for gRPC UI and Swagger UI support
+- `docker`: Required for Swagger UI (when using `--swaggerui`)
   ```bash
-  brew install netcat
+  # Install Docker Desktop from https://www.docker.com/
   ```
 
-- `docker`: Required for Swagger UI support (when using the `--swaggerui` flag)
-  ```bash
-  # Install from https://www.docker.com/products/docker-desktop
-  ```
+### Development Dependencies
+- GitHub CLI (`gh`) for releases: `brew install gh`
 
 ## Architecture
 
-The tool uses a modular design with these core patterns:
+The application uses modern Go patterns and frameworks:
 
-- **Main Loop**: `kportforward.sh` coordinates all modules and runs the monitoring loop
-- **Associative Arrays**: Service data is stored in bash associative arrays (e.g., `target_map`, `status_map`, `pid_map`)
-- **Process Management**: Each port-forward runs as a background `kubectl port-forward` process
-- **Real-time Monitoring**: Main loop checks process status every second and restarts failed connections
-- **UI Integration**: Optional gRPC UI and Swagger UI processes are spawned and managed alongside port-forwards
-- **Context Awareness**: Detects Kubernetes context changes and restarts all port-forwards accordingly
+### Core Design Patterns
+- **Embedded Configuration**: Default services embedded at compile-time using `//go:embed`
+- **Additive User Config**: User configuration at `~/.config/kportforward/config.yaml` merges with defaults
+- **Interface-Based UI Handlers**: `UIHandler` interface allows pluggable UI management systems
+- **Channel-Based Communication**: Status updates flow through channels to the TUI
+- **Context-Aware Shutdown**: Graceful shutdown using `context.Context`
+- **Cross-Platform Process Management**: Platform-specific implementations using build tags
+
+### Key Libraries
+- **Bubble Tea**: Modern TUI framework for reactive terminal interfaces
+- **Lipgloss**: Terminal styling and layout
+- **Cobra**: CLI framework for commands and flags
+- **YAML v3**: Configuration parsing and merging
+
+### UI Handler System
+- **gRPC UI**: Spawns and manages `grpcui` processes for RPC services
+- **Swagger UI**: Manages Docker containers running Swagger UI for REST services
+- **Automatic Lifecycle**: UI handlers start/stop automatically based on service status
+- **Health Monitoring**: Continuous monitoring with restart capabilities
 
 ## Configuration
 
-The `kportforward.yaml` file defines port-forwards with the following structure:
+### Embedded Default Configuration
+The application includes 18 pre-configured services embedded at compile-time. These cover common Kubernetes services and can be found in `internal/config/default.yaml`.
+
+### User Configuration Override
+Users can create `~/.config/kportforward/config.yaml` to add services or override defaults:
 
 ```yaml
 portForwards:
-  service-name:
-    target: "service/service-name"
-    targetPort: 80
-    localPort: 8080
-    namespace: "namespace"
-    type: "web"  # Optional: "web", "rest", or "rpc"
-    swaggerPath: "api/docs"  # Optional: for Swagger UI
-    apiPath: "api"  # Optional: base API path
+  my-service:
+    target: "service/my-service"
+    targetPort: 8080
+    localPort: 9080
+    namespace: "default"
+    type: "rest"
+    swaggerPath: "docs/swagger"
+    apiPath: "api/v1"
+monitoringInterval: 5s
+uiOptions:
+  refreshRate: 1s
+  theme: "dark"
 ```
 
-Each entry must include:
-- `target`: The Kubernetes resource to forward to (e.g., `service/name`)
-- `targetPort`: The port on the target resource
-- `localPort`: The local machine port to forward
-- `namespace`: The namespace where the target resource is located
-- `type`: (optional) The API type to categorize the service ("rest", "rpc", "web")
-- `swaggerPath`: (optional) Path to Swagger docs for REST services
-- `apiPath`: (optional) Base API path for REST services
+### Configuration Fields
+- `target`: Kubernetes resource (e.g., `service/name`, `deployment/name`)
+- `targetPort`: Port on the target resource
+- `localPort`: Local machine port for forwarding
+- `namespace`: Kubernetes namespace
+- `type`: Service type (`web`, `rest`, `rpc`) for UI automation
+- `swaggerPath`: Path to Swagger documentation (REST services)
+- `apiPath`: Base API path (REST services)
 
 ## Key Features
 
-- Modular architecture for better maintainability
-- Automated port-forwards from YAML configuration
-- Real-time monitoring with automatic restart of disconnected tunnels
-- Interactive terminal display with color-coded status
-- Kubernetes context change detection
-- gRPC UI support for RPC services
-- Swagger UI support for REST services
-- Port conflict detection and resolution
-- Exponential backoff for frequently failing services
-- Graceful shutdown
+### Core Functionality
+- **Cross-Platform**: Works on macOS, Linux, and Windows
+- **Modern Terminal UI**: Interactive interface with real-time updates and keyboard navigation
+- **Automatic Recovery**: Monitors and restarts failed port-forwards with exponential backoff
+- **Embedded Configuration**: 18 pre-configured services with user override capability
+- **Auto-Updates**: Daily update checks with in-UI notifications
 
-## Development Notes
+### Advanced Features
+- **UI Integration**: Automated gRPC UI and Swagger UI for API services
+- **Context Awareness**: Detects Kubernetes context changes and restarts services
+- **Port Conflict Resolution**: Automatically finds available ports
+- **Interactive Sorting**: Sort services by name, status, type, port, or uptime
+- **Detail Views**: Expandable service details with error information
+- **Graceful Shutdown**: Clean process termination with proper cleanup
 
-- When modifying modules, source them in the correct order in `kportforward.sh`
-- UI handlers use temporary log files in `/tmp/kpf_*` for debugging
-- Process cleanup is handled via trap signals (SIGINT, SIGTERM)
-- Port conflict resolution automatically finds next available port starting from configured port
-- Exponential backoff prevents resource exhaustion from frequently failing services
+## Development Workflow
+
+### Adding New Features
+1. **Write Tests First**: Add tests to appropriate `*_test.go` files
+2. **Implement Feature**: Follow existing patterns and interfaces
+3. **Format Code**: Git hooks automatically run `gofmt -s -w .`
+4. **Run Tests**: `go test ./...` must pass
+5. **Build and Test**: `go build` and manual testing
+
+### Code Quality
+- **Git Hooks**: Pre-commit hooks ensure Go formatting
+- **Interface Design**: Use interfaces for testability and modularity
+- **Error Handling**: Comprehensive error handling with proper logging
+- **Cross-Platform**: Use build tags for platform-specific code
+
+### Testing Strategy
+- **Unit Tests**: Core logic tested with mocks and fakes
+- **Integration Tests**: UI handler interfaces tested with mock implementations
+- **CI Testing**: GitHub Actions run tests on multiple platforms
+- **Manual Testing**: Real Kubernetes cluster testing for validation
 
 ## Testing
 
-The tool doesn't have formal tests. Manual testing can be performed by:
-1. Setting up a test configuration in `kportforward.yaml`
-2. Running the script with `./kportforward.sh`
-3. Verifying port-forwards are established and monitored correctly
-4. Testing UI features with `--grpcui` and `--swaggerui` flags
-5. Syntax checking with `bash -n` on all shell scripts
+### Running Tests
+```bash
+# Run all tests
+go test ./...
+
+# Run tests with verbose output
+go test ./... -v
+
+# Run tests for specific package
+go test ./internal/config -v
+
+# Run tests with coverage
+go test ./... -cover
+```
+
+### Test Coverage
+- **Config Package**: Configuration loading, validation, merging
+- **Utils Package**: Port management, logging, cross-platform utilities
+- **Portforward Package**: Manager lifecycle, UI handler integration
+- **UI Handlers Package**: gRPC UI and Swagger UI functionality
+
+## Build and Release
+
+### Local Development
+```bash
+# Build for current platform
+go build -o bin/kportforward ./cmd/kportforward
+
+# Build for all platforms
+./scripts/build.sh
+```
+
+### Release Process
+```bash
+# Create new release (requires GitHub CLI)
+./scripts/release.sh v1.1.0
+
+# GitHub Actions automatically:
+# - Builds for all platforms
+# - Runs tests
+# - Creates GitHub release
+# - Uploads binaries
+```
 
 ## Troubleshooting
 
-Common issues:
-- Missing dependencies: Install required tools using Homebrew
-- Port conflicts: The tool automatically handles these by finding the next available port
-- gRPC UI issues: Check logs in `/tmp/kpf_grpcui_*.log` for detailed error messages
-- Swagger UI issues: Ensure Docker is running on your machine
-- Kubernetes context issues: Verify correct context with `kubectl config current-context`
-- Excessive restarts: Services that restart frequently will enter a cooldown period with exponential backoff
+### Common Issues
+- **Build Failures**: Check Go version (requires 1.21+)
+- **Missing kubectl**: Install with `brew install kubectl`
+- **gRPC UI not working**: Install with `go install github.com/fullstorydev/grpcui/cmd/grpcui@latest`
+- **Swagger UI failures**: Ensure Docker Desktop is running
+- **Port conflicts**: Application automatically resolves these
+- **Context issues**: Verify with `kubectl config current-context`
+
+### Debugging
+- **Verbose Logging**: Check logger initialization in `main.go`
+- **UI Handler Logs**: gRPC UI logs in `/tmp/kpf_grpcui_*.log`
+- **Process Issues**: Use platform-specific process utilities in `utils/`
+- **Configuration Issues**: Verify embedded config loading in `config/`
+
+### Development Tips
+- **Use Git Hooks**: Run `./scripts/install-hooks.sh` for automatic formatting
+- **Test Early**: Write tests before implementing features
+- **Follow Interfaces**: Use `UIHandler` pattern for new UI integrations
+- **Cross-Platform**: Test on different operating systems when possible
+- **Error Handling**: Always handle errors gracefully with proper logging
