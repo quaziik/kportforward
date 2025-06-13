@@ -24,16 +24,18 @@ var (
 	// CLI flags
 	enableGRPCUI    bool
 	enableSwaggerUI bool
-)
 
-func main() {
-	var rootCmd = &cobra.Command{
+	// Global root command
+	rootCmd = &cobra.Command{
 		Use:   "kportforward",
 		Short: "A modern Kubernetes port-forward manager",
 		Long: `kportforward is a cross-platform tool for managing multiple Kubernetes port-forwards
 with a modern terminal UI, automatic recovery, and built-in update system.`,
 		Run: runPortForward,
 	}
+)
+
+func main() {
 
 	// Add CLI flags
 	rootCmd.Flags().BoolVar(&enableGRPCUI, "grpcui", false, "Enable gRPC UI for RPC services")
