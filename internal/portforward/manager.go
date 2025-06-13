@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"reflect"
 	"sync"
 	"time"
 
@@ -107,7 +108,7 @@ func (m *Manager) Stop() error {
 	}
 
 	// Stop UI handlers
-	if m.grpcUIHandler != nil && m.grpcUIHandler.IsEnabled() {
+	if m.grpcUIHandler != nil && !isNilInterface(m.grpcUIHandler) && m.grpcUIHandler.IsEnabled() {
 		for serviceName := range m.services {
 			if err := m.grpcUIHandler.StopService(serviceName); err != nil {
 				m.logger.Error("Failed to stop gRPC UI for %s: %v", serviceName, err)
@@ -115,7 +116,7 @@ func (m *Manager) Stop() error {
 		}
 	}
 
-	if m.swaggerUIHandler != nil && m.swaggerUIHandler.IsEnabled() {
+	if m.swaggerUIHandler != nil && !isNilInterface(m.swaggerUIHandler) && m.swaggerUIHandler.IsEnabled() {
 		for serviceName := range m.services {
 			if err := m.swaggerUIHandler.StopService(serviceName); err != nil {
 				m.logger.Error("Failed to stop Swagger UI for %s: %v", serviceName, err)
@@ -237,15 +238,30 @@ func (m *Manager) monitorUIHandlers(statusMap map[string]config.ServiceStatus) {
 	swaggerHandler := m.swaggerUIHandler
 	m.mutex.RUnlock()
 
-	// Monitor gRPC UI handler
-	if grpcHandler != nil && grpcHandler.IsEnabled() {
+	// Monitor gRPC UI handler - check both nil interface and nil concrete value
+	if grpcHandler != nil && !isNilInterface(grpcHandler) && grpcHandler.IsEnabled() {
 		grpcHandler.MonitorServices(statusMap, m.config.PortForwards)
 	}
 
-	// Monitor Swagger UI handler
-	if swaggerHandler != nil && swaggerHandler.IsEnabled() {
+	// Monitor Swagger UI handler - check both nil interface and nil concrete value
+	if swaggerHandler != nil && !isNilInterface(swaggerHandler) && swaggerHandler.IsEnabled() {
 		swaggerHandler.MonitorServices(statusMap, m.config.PortForwards)
 	}
+}
+
+// isNilInterface checks if an interface contains a nil concrete value
+func isNilInterface(handler UIHandler) bool {
+	if handler == nil {
+		return true
+	}
+
+	// Use reflection to check if the interface contains a nil pointer
+	v := reflect.ValueOf(handler)
+	if v.Kind() == reflect.Ptr {
+		return v.IsNil()
+	}
+
+	return false
 }
 
 // checkKubernetesContext monitors for Kubernetes context changes
