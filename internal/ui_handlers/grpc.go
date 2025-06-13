@@ -261,7 +261,7 @@ func (gm *GRPCUIManager) MonitorServices(services map[string]config.ServiceStatu
 	}
 
 	// Stop gRPC UI for services that are no longer running
-	for serviceName, uiService := range gm.services {
+	for serviceName := range gm.services {
 		serviceStatus, exists := services[serviceName]
 		if !exists || serviceStatus.Status != "Running" {
 			go func(name string) {
