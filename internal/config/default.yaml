@@ -1,0 +1,132 @@
+portForwards:
+  # Catio service
+  arch-inventory:
+    target: "service/architecture-inventory"
+    targetPort: 80
+    localPort: 50100
+    namespace: "catio-data-extraction"
+    type: "rpc"
+  environment:
+    target: "service/environment"
+    targetPort: 80
+    localPort: 50800
+    namespace: "catio-data-extraction"
+    type: "rest"
+    swaggerPath: "configuration/swagger"
+    apiPath: "api/environment"
+  initialization:
+    target: "service/initialization"
+    targetPort: 80
+    localPort: 50801
+    namespace: "catio-data-extraction"
+    type: "rest"
+    swaggerPath: "configuration/swagger"
+    apiPath: "api/initialization"
+  requirements-document:
+    target: "service/requirements-document"
+    targetPort: 80
+    localPort: 50805
+    namespace: "catio-data-extraction"
+    type: "rest"
+    swaggerPath: "configuration/swagger"
+    apiPath: "api/requirements-document"
+  requirements-section:
+    target: "service/requirements-section"
+    targetPort: 80
+    localPort: 50806
+    namespace: "catio-data-extraction"
+    type: "rest"
+    swaggerPath: "configuration/swagger"
+    apiPath: "api/requirements-section"
+  recommendations-document:
+    target: "service/recommendations-document"
+    targetPort: 80
+    localPort: 50807
+    namespace: "catio-data-extraction"
+    type: "rest"
+    swaggerPath: "configuration/swagger"
+    apiPath: "api/recommendations-document"
+  recommendations-section:
+    target: "service/recommendations-section"
+    targetPort: 80
+    localPort: 50808
+    namespace: "catio-data-extraction"
+    type: "rest"
+    swaggerPath: "configuration/swagger"
+    apiPath: "api/recommendations-section"
+  recommendations-mgnt:
+    target: "service/recommendations-mgnt"
+    targetPort: 50051
+    localPort: 50106
+    namespace: "catio-data-extraction"
+    type: "rpc"
+  process-monitor:
+    target: "service/process-monitor-v2"
+    targetPort: 5001
+    localPort: 50101
+    namespace: "catio-data-extraction"
+    type: "rpc"
+  extractor-config-service:
+    target: "service/extractor-config-service-rpc"
+    targetPort: 50051
+    localPort: 50102
+    namespace: "catio-data-extraction"
+    type: "rpc"
+  extractor-trigger:
+    target: "service/extractor-trigger"
+    targetPort: 80
+    localPort: 8027
+    namespace: "catio-data-extraction"
+    type: "rest"
+  embeddings-data-service:
+    target: "service/embeddings-data-service"
+    targetPort: 5001
+    localPort: 50103
+    namespace: "catio-data-extraction"
+    type: "rpc"
+  workflow-trigger:
+    target: "service/workflow-trigger"
+    targetPort: 80
+    localPort: 50105
+    namespace: "catio-data-extraction"
+    type: "rpc"
+  # Eagle eye
+  eagle-eye:
+    target: "service/eagle-eye-streamlit-service"
+    targetPort: 80
+    localPort: 8020
+    namespace: "catio-data-extraction"
+    type: "web"
+  mas-chat:
+    target: "service/mas-chat-service"
+    targetPort: 5001
+    localPort: 50104
+    namespace: "catio-data-extraction"
+    type: "other"
+
+  # Flyte Console and admin services
+  flyte-console:
+    target: "service/flyteconsole"
+    targetPort: 80
+    localPort: 8088
+    namespace: "flyte"
+    type: "web"
+  flyte-admin-rpc:
+    target: "service/flyteadmin"
+    targetPort: 81
+    localPort: 8089
+    namespace: "flyte"
+    type: "rpc"
+    swaggerPath: "configuration/swagger"
+    apiPath: "api"
+  flyte-admin-web:
+    target: "service/flyteadmin"
+    targetPort: 80
+    localPort: 8081
+    namespace: "flyte"
+    type: "other"
+
+monitoringInterval: 1s
+uiOptions:
+  refreshRate: 100ms
+  theme: "dark"
