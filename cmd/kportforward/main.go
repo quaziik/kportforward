@@ -149,7 +149,7 @@ func runPortForward(cmd *cobra.Command, args []string) {
 	}
 
 	// Initialize and start TUI
-	tui := ui.NewTUI(manager.GetStatusChannel())
+	tui := ui.NewTUI(manager.GetStatusChannel(), cfg.PortForwards)
 	if err := tui.Start(); err != nil {
 		logger.Error("Failed to start TUI: %v", err)
 		os.Exit(1)

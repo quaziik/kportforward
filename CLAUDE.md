@@ -272,9 +272,26 @@ go build -o bin/kportforward ./cmd/kportforward
 ```
 
 ### Release Process
+
+**IMPORTANT**: Always check existing releases before creating a new one to determine the correct version number.
+
 ```bash
-# Create new release (requires GitHub CLI)
-./scripts/release.sh v1.1.0
+# 1. Check existing releases first
+gh release list
+# OR
+git tag --sort=-version:refname | head -5
+
+# 2. Determine next version number (semantic versioning)
+# - Patch: v1.2.1 (bug fixes)
+# - Minor: v1.3.0 (new features)
+# - Major: v2.0.0 (breaking changes)
+
+# 3. Create new release with correct version
+./scripts/release.sh v1.2.1
+
+# 4. Push tag and create GitHub release
+git push origin v1.2.1
+gh release create v1.2.1 --title "Title" --notes "Release notes" dist/*
 
 # GitHub Actions automatically:
 # - Builds for all platforms

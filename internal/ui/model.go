@@ -43,6 +43,7 @@ const (
 type Model struct {
 	// Data
 	services        map[string]config.ServiceStatus
+	serviceConfigs  map[string]config.Service
 	serviceNames    []string
 	kubeContext     string
 	lastUpdate      time.Time
@@ -77,16 +78,17 @@ type UpdateAvailableMsg bool
 type TickMsg time.Time
 
 // NewModel creates a new TUI model
-func NewModel(statusChan <-chan map[string]config.ServiceStatus) *Model {
+func NewModel(statusChan <-chan map[string]config.ServiceStatus, serviceConfigs map[string]config.Service) *Model {
 	return &Model{
-		services:      make(map[string]config.ServiceStatus),
-		serviceNames:  make([]string, 0),
-		selectedIndex: 0,
-		sortField:     SortByName,
-		sortReverse:   false,
-		viewMode:      ViewTable,
-		refreshRate:   250 * time.Millisecond,
-		statusChan:    statusChan,
+		services:       make(map[string]config.ServiceStatus),
+		serviceConfigs: serviceConfigs,
+		serviceNames:   make([]string, 0),
+		selectedIndex:  0,
+		sortField:      SortByName,
+		sortReverse:    false,
+		viewMode:       ViewTable,
+		refreshRate:    250 * time.Millisecond,
+		statusChan:     statusChan,
 	}
 }
 
@@ -371,32 +373,39 @@ func (m *Model) renderTable() string {
 		service := m.services[serviceName]
 		selected := (i == m.selectedIndex)
 
-		// Format columns
-		nameCol := fmt.Sprintf("%-*s", nameWidth, truncateString(serviceName, nameWidth))
+		// Get raw content for each column
+		nameContent := truncateString(serviceName, nameWidth)
+		statusContent := service.Status
+		urlContent := m.formatServiceURL(service, urlWidth)
+		typeContent := truncateString(m.getServiceType(serviceName), typeWidth)
 
-		statusCol := fmt.Sprintf("%s %-*s",
-			GetStatusIndicator(service.Status),
-			statusWidth-2,
-			service.Status)
-
-		urlCol := m.formatServiceURL(service, urlWidth)
-
-		typeCol := fmt.Sprintf("%-*s", typeWidth, truncateString(service.Name, typeWidth))
-
-		uptimeCol := ""
+		uptimeContent := "-"
 		if !service.StartTime.IsZero() {
 			uptime := time.Since(service.StartTime)
-			uptimeCol = fmt.Sprintf("%-*s", uptimeWidth, utils.FormatUptime(uptime))
-		} else {
-			uptimeCol = fmt.Sprintf("%-*s", uptimeWidth, "-")
+			uptimeContent = utils.FormatUptime(uptime)
 		}
 
-		errorCol := fmt.Sprintf("%-*s", errorWidth, truncateString(service.LastError, errorWidth))
+		errorContent := truncateString(service.LastError, errorWidth)
 
-		// Combine row
-		rowContent := strings.Join([]string{
-			nameCol, statusCol, urlCol, typeCol, uptimeCol, errorCol,
-		}, " ")
+		// Create columns with exact width (pad first, then style)
+		nameCol := fmt.Sprintf("%-*s", nameWidth, nameContent)
+		statusCol := fmt.Sprintf("%s %-*s", GetStatusIndicator(service.Status), statusWidth-2, statusContent)
+
+		// Handle URL with proper width - style only the actual URL part
+		var urlCol string
+		if service.Status == "Running" {
+			// Only style if it's an actual URL, then pad to correct width
+			urlCol = FormatURL(urlContent) + strings.Repeat(" ", urlWidth-len(urlContent))
+		} else {
+			urlCol = fmt.Sprintf("%-*s", urlWidth, urlContent)
+		}
+
+		typeCol := fmt.Sprintf("%-*s", typeWidth, typeContent)
+		uptimeCol := fmt.Sprintf("%-*s", uptimeWidth, uptimeContent)
+		errorCol := fmt.Sprintf("%-*s", errorWidth, errorContent)
+
+		// Combine row with single spaces between columns
+		rowContent := nameCol + " " + statusCol + " " + urlCol + " " + typeCol + " " + uptimeCol + " " + errorCol
 
 		rows = append(rows, FormatTableRow(rowContent, selected))
 	}
@@ -432,7 +441,7 @@ func (m *Model) renderFooter() string {
 // formatServiceURL formats the URL for a service
 func (m *Model) formatServiceURL(service config.ServiceStatus, maxWidth int) string {
 	if service.Status != "Running" {
-		return fmt.Sprintf("%-*s", maxWidth, "-")
+		return "-"
 	}
 
 	url := fmt.Sprintf("http://localhost:%d", service.LocalPort)
@@ -440,7 +449,7 @@ func (m *Model) formatServiceURL(service config.ServiceStatus, maxWidth int) str
 		url = truncateString(url, maxWidth)
 	}
 
-	return fmt.Sprintf("%-*s", maxWidth, FormatURL(url))
+	return url
 }
 
 // updateServiceNames updates and sorts the service names list
@@ -459,7 +468,7 @@ func (m *Model) updateServiceNames() {
 		case SortByStatus:
 			less = a.Status < b.Status
 		case SortByType:
-			less = getServiceType(m.serviceNames[i]) < getServiceType(m.serviceNames[j])
+			less = m.getServiceType(m.serviceNames[i]) < m.getServiceType(m.serviceNames[j])
 		case SortByPort:
 			less = a.LocalPort < b.LocalPort
 		case SortByUptime:
@@ -483,18 +492,12 @@ func (m *Model) updateServiceNames() {
 	}
 }
 
-// getServiceType returns the type of a service (from embedded config)
-func getServiceType(serviceName string) string {
-	// This would ideally come from the service config
-	// For now, we'll use a simple heuristic
-	if strings.Contains(serviceName, "rpc") {
-		return "rpc"
-	} else if strings.Contains(serviceName, "web") || strings.Contains(serviceName, "console") {
-		return "web"
-	} else if strings.Contains(serviceName, "api") {
-		return "rest"
+// getServiceType returns the type of a service from the service configs
+func (m *Model) getServiceType(serviceName string) string {
+	if serviceConfig, exists := m.serviceConfigs[serviceName]; exists {
+		return serviceConfig.Type
 	}
-	return "other"
+	return "unknown"
 }
 
 // truncateString truncates a string to fit within the specified width
