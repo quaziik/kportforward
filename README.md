@@ -76,6 +76,15 @@ Invoke-WebRequest -Uri "https://github.com/catio-tech/kportforward/releases/late
    kportforward --grpcui --swaggerui
    ```
 
+4. **With log file output**:
+   ```bash
+   # Write logs to a file instead of stdout
+   kportforward --log-file /path/to/logfile.log
+   
+   # Combine with UI features
+   kportforward --grpcui --swaggerui --log-file /var/log/kportforward.log
+   ```
+
 ## ⚙️ Configuration
 
 kportforward uses embedded configuration for immediate functionality, with support for user customizations.
@@ -246,6 +255,9 @@ kportforward --help
 # Performance profiling
 kportforward profile --cpuprofile=cpu.prof --memprofile=mem.prof --duration=60s
 
+# Debug with log file
+kportforward --log-file /tmp/debug.log
+
 # Check service status manually
 kubectl port-forward -n <namespace> <service> <port>:<port>
 
@@ -331,12 +343,12 @@ kportforward --grpcui --swaggerui
 
 ### Advanced Workflows
 ```bash
-# Different contexts
+# Different contexts with logging
 kubectl config use-context staging
-kportforward --grpcui  # gRPC UI for staging services
+kportforward --grpcui --log-file /var/log/staging.log
 
 kubectl config use-context production  
-kportforward --swaggerui  # Swagger UI for production APIs
+kportforward --swaggerui --log-file /var/log/production.log
 
 # Check what's running
 kportforward version  # Shows current version and update status
@@ -344,14 +356,18 @@ kportforward version  # Shows current version and update status
 
 ### Development Workflow
 ```bash
-# Developer working on microservices
-kportforward --grpcui --swaggerui
+# Developer working on microservices with logging
+kportforward --grpcui --swaggerui --log-file ./dev.log
+
+# Production deployment with log rotation
+kportforward --log-file /var/log/kportforward.log
 
 # Access services:
 # - Embedded services available at configured ports
 # - gRPC UI: http://localhost:9090 (auto-assigned)
 # - Swagger UI: http://localhost:8080 (auto-assigned)
 # - Your APIs accessible through UI tools
+# - All activity logged to specified file
 ```
 
 ## 📋 Documentation

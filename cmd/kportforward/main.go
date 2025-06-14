@@ -24,6 +24,7 @@ var (
 	// CLI flags
 	enableGRPCUI    bool
 	enableSwaggerUI bool
+	logFile         string
 
 	// Global root command
 	rootCmd = &cobra.Command{
@@ -40,6 +41,7 @@ func main() {
 	// Add CLI flags
 	rootCmd.Flags().BoolVar(&enableGRPCUI, "grpcui", false, "Enable gRPC UI for RPC services")
 	rootCmd.Flags().BoolVar(&enableSwaggerUI, "swaggerui", false, "Enable Swagger UI for REST services")
+	rootCmd.Flags().StringVar(&logFile, "log-file", "", "Write logs to specified file (default: stdout)")
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",
@@ -57,6 +59,22 @@ func main() {
 	}
 }
 
+// initializeLogger creates a logger with the appropriate output destination
+func initializeLogger(logFile string) (*utils.Logger, error) {
+	if logFile == "" {
+		// Use stdout if no log file specified
+		return utils.NewLogger(utils.LevelInfo), nil
+	}
+
+	// Create logger with file output
+	logger, err := utils.NewLoggerWithFile(utils.LevelInfo, logFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file logger: %w", err)
+	}
+
+	return logger, nil
+}
+
 func runPortForward(cmd *cobra.Command, args []string) {
 	// Load configuration
 	cfg, err := config.LoadConfig()
@@ -65,7 +83,10 @@ func runPortForward(cmd *cobra.Command, args []string) {
 	}
 
 	// Initialize logger
-	logger := utils.NewLogger(utils.LevelInfo)
+	logger, err := initializeLogger(logFile)
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
 	logger.Info("Starting kportforward with %d services", len(cfg.PortForwards))
 
 	// Initialize UI handlers
@@ -161,6 +182,11 @@ func runPortForward(cmd *cobra.Command, args []string) {
 	}
 
 	logger.Info("Shutdown complete")
+
+	// Close log file if it was opened
+	if err := logger.Close(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error closing log file: %v\n", err)
+	}
 }
 
 func displayStatus(status map[string]config.ServiceStatus, kubeContext string) {

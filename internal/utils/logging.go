@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -10,7 +11,9 @@ import (
 // Logger represents a simple logger for the application
 type Logger struct {
 	*log.Logger
-	level LogLevel
+	level   LogLevel
+	output  io.Writer
+	logFile *os.File // Keep reference to close file if needed
 }
 
 // LogLevel represents different logging levels
@@ -30,12 +33,33 @@ var logLevelNames = map[LogLevel]string{
 	LevelError: "ERROR",
 }
 
-// NewLogger creates a new logger instance
+// NewLogger creates a new logger instance with stdout output
 func NewLogger(level LogLevel) *Logger {
+	return NewLoggerWithOutput(level, os.Stdout)
+}
+
+// NewLoggerWithOutput creates a new logger instance with custom output
+func NewLoggerWithOutput(level LogLevel, output io.Writer) *Logger {
 	return &Logger{
-		Logger: log.New(os.Stdout, "", 0),
+		Logger: log.New(output, "", 0),
 		level:  level,
+		output: output,
 	}
+}
+
+// NewLoggerWithFile creates a new logger instance that writes to a file
+func NewLoggerWithFile(level LogLevel, filePath string) (*Logger, error) {
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open log file %s: %w", filePath, err)
+	}
+
+	return &Logger{
+		Logger:  log.New(file, "", 0),
+		level:   level,
+		output:  file,
+		logFile: file,
+	}, nil
 }
 
 // logf formats and logs a message at the specified level
@@ -74,6 +98,16 @@ func (l *Logger) Error(format string, args ...interface{}) {
 // SetLevel changes the logging level
 func (l *Logger) SetLevel(level LogLevel) {
 	l.level = level
+}
+
+// Close closes the log file if one is open
+func (l *Logger) Close() error {
+	if l.logFile != nil {
+		err := l.logFile.Close()
+		l.logFile = nil // Set to nil to prevent double close
+		return err
+	}
+	return nil
 }
 
 // FormatUptime formats a duration as a human-readable uptime string

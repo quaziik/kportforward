@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -126,5 +128,114 @@ func TestFormatUptimeReadability(t *testing.T) {
 		if strings.TrimSpace(result) == "" {
 			t.Errorf("FormatUptime returned only whitespace for duration %v", dur)
 		}
+	}
+}
+
+func TestNewLoggerWithFile(t *testing.T) {
+	// Create a temporary file for testing
+	tempDir := t.TempDir()
+	logFile := filepath.Join(tempDir, "test.log")
+
+	// Test creating logger with file
+	logger, err := NewLoggerWithFile(LevelInfo, logFile)
+	if err != nil {
+		t.Fatalf("Failed to create logger with file: %v", err)
+	}
+	defer logger.Close()
+
+	// Write a test message
+	logger.Info("test message")
+
+	// Verify file was created and contains content
+	if _, err := os.Stat(logFile); os.IsNotExist(err) {
+		t.Error("Log file was not created")
+	}
+
+	// Read file content
+	content, err := os.ReadFile(logFile)
+	if err != nil {
+		t.Fatalf("Failed to read log file: %v", err)
+	}
+
+	if !strings.Contains(string(content), "test message") {
+		t.Error("Log file does not contain expected message")
+	}
+
+	if !strings.Contains(string(content), "INFO") {
+		t.Error("Log file does not contain log level")
+	}
+}
+
+func TestLoggerFileAppend(t *testing.T) {
+	// Create a temporary file for testing
+	tempDir := t.TempDir()
+	logFile := filepath.Join(tempDir, "append_test.log")
+
+	// Create first logger and write a message
+	logger1, err := NewLoggerWithFile(LevelInfo, logFile)
+	if err != nil {
+		t.Fatalf("Failed to create first logger: %v", err)
+	}
+	logger1.Info("first message")
+	logger1.Close()
+
+	// Create second logger and write another message
+	logger2, err := NewLoggerWithFile(LevelInfo, logFile)
+	if err != nil {
+		t.Fatalf("Failed to create second logger: %v", err)
+	}
+	logger2.Info("second message")
+	logger2.Close()
+
+	// Read file content
+	content, err := os.ReadFile(logFile)
+	if err != nil {
+		t.Fatalf("Failed to read log file: %v", err)
+	}
+
+	contentStr := string(content)
+	if !strings.Contains(contentStr, "first message") {
+		t.Error("Log file does not contain first message")
+	}
+
+	if !strings.Contains(contentStr, "second message") {
+		t.Error("Log file does not contain second message")
+	}
+}
+
+func TestLoggerWithInvalidFile(t *testing.T) {
+	// Try to create logger with invalid file path
+	_, err := NewLoggerWithFile(LevelInfo, "/invalid/path/that/does/not/exist/test.log")
+	if err == nil {
+		t.Error("Expected error when creating logger with invalid file path")
+	}
+}
+
+func TestLoggerClose(t *testing.T) {
+	// Test closing a stdout logger (should not error)
+	logger := NewLogger(LevelInfo)
+	err := logger.Close()
+	if err != nil {
+		t.Errorf("Unexpected error closing stdout logger: %v", err)
+	}
+
+	// Test closing a file logger
+	tempDir := t.TempDir()
+	logFile := filepath.Join(tempDir, "close_test.log")
+
+	fileLogger, err := NewLoggerWithFile(LevelInfo, logFile)
+	if err != nil {
+		t.Fatalf("Failed to create file logger: %v", err)
+	}
+
+	err = fileLogger.Close()
+	if err != nil {
+		t.Errorf("Unexpected error closing file logger: %v", err)
+	}
+
+	// Try to close again (should not error)
+	err = fileLogger.Close()
+	if err != nil {
+		t.Errorf("Unexpected error closing already closed logger: %v", err)
 	}
 }

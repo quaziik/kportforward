@@ -90,6 +90,9 @@ go tool pprof mem.prof
 # With both gRPC UI and Swagger UI support
 ./bin/kportforward --grpcui --swaggerui
 
+# With log file output
+./bin/kportforward --log-file /path/to/logfile.log
+
 # Performance profiling
 ./bin/kportforward profile --cpuprofile=cpu.prof --memprofile=mem.prof --duration=30s
 
@@ -197,6 +200,7 @@ uiOptions:
 - **Context Awareness**: Detects Kubernetes context changes and restarts services
 - **High-Performance Port Management**: Optimized port conflict resolution (600x faster) with intelligent caching
 - **Performance Profiling**: Built-in CPU and memory profiling with `profile` command
+- **Log File Support**: Configurable log output to files with `--log-file` flag
 - **Optimized Algorithms**: Smart caching, object pooling, and concurrent processing
 - **Interactive Sorting**: Sort services by name, status, type, port, or uptime
 - **Detail Views**: Expandable service details with error information
@@ -291,6 +295,7 @@ go build -o bin/kportforward ./cmd/kportforward
 
 ### Debugging
 - **Verbose Logging**: Check logger initialization in `main.go`
+- **Log File Debugging**: Use `--log-file /tmp/debug.log` to capture detailed logs
 - **UI Handler Logs**: gRPC UI logs in `/tmp/kpf_grpcui_*.log`
 - **Process Issues**: Use platform-specific process utilities in `utils/`
 - **Configuration Issues**: Verify embedded config loading in `config/`

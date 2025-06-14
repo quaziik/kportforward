@@ -254,6 +254,39 @@ go tool pprof mem.prof
 go test -bench=. -benchmem ./...
 ```
 
+### 2025-06-13 - Log File Output Feature Implementation
+**Tasks Completed:**
+- [x] Added `--log-file` command line flag for configurable log output
+- [x] Enhanced logging utility to support file output with `NewLoggerWithFile()`
+- [x] Implemented proper file handling with append mode and error handling
+- [x] Added logger cleanup with `Close()` method to prevent file handle leaks
+- [x] Created comprehensive test suite for file logging functionality
+- [x] Updated documentation to include log file usage examples
+
+**Technical Implementation:**
+- **Command Line Interface**: Added `--log-file string` flag to main CLI
+- **Logger Enhancement**: Extended utils/logging.go with file output support
+- **File Handling**: Proper file creation, append mode, and graceful cleanup
+- **Error Handling**: Comprehensive error handling for invalid file paths
+- **Memory Management**: Proper file handle cleanup to prevent leaks
+
+**Usage Examples:**
+```bash
+# Write logs to file
+kportforward --log-file /var/log/kportforward.log
+
+# Combine with UI features
+kportforward --grpcui --swaggerui --log-file ./debug.log
+
+# Production deployment
+kportforward --log-file /var/log/kportforward.log
+```
+
+**Testing:**
+- Created 5 new test functions covering file logging functionality
+- Tests include file creation, append behavior, error handling, and cleanup
+- All tests passing with proper file handle management
+
 ### 2025-06-13 - UI Handler Integration & Testing (Continued)
 **Tasks Completed:**
 - [x] Added `--grpcui` and `--swaggerui` CLI flags to main.go
@@ -312,6 +345,7 @@ The Go rewrite is now **feature-complete** and ready for production use. All ori
 - ✅ Comprehensive testing suite (80+ tests)
 - ✅ Performance optimization system with 4,200x faster config loading
 - ✅ Built-in CPU and memory profiling tools
+- ✅ Log file output support (`--log-file`)
 - ✅ Git hooks for automatic code formatting
 - ✅ CI/CD pipeline with multi-platform builds
 
