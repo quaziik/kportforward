@@ -154,10 +154,14 @@ func (sm *ServiceManager) GetStatus() config.ServiceStatus {
 	sm.mutex.RLock()
 	defer sm.mutex.RUnlock()
 
-	// Update status based on health check
-	if sm.status.Status == "Running" && !sm.IsHealthy() {
-		sm.status.Status = "Failed"
-		sm.status.LastError = "Health check failed"
+	// Update status based on health check, but allow grace period for startup
+	if sm.status.Status == "Running" {
+		// Give service 5 seconds grace period after startup before health checking
+		gracePeriod := 5 * time.Second
+		if time.Since(sm.status.StartTime) > gracePeriod && !sm.IsHealthy() {
+			sm.status.Status = "Failed"
+			sm.status.LastError = "Health check failed"
+		}
 	}
 
 	return *sm.status

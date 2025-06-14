@@ -31,7 +31,23 @@ var (
 		Use:   "kportforward",
 		Short: "A modern Kubernetes port-forward manager",
 		Long: `kportforward is a cross-platform tool for managing multiple Kubernetes port-forwards
-with a modern terminal UI, automatic recovery, and built-in update system.`,
+with a modern terminal UI, automatic recovery, and built-in update system.
+
+Examples:
+  # Basic usage
+  kportforward
+
+  # With UI integrations
+  kportforward --grpcui --swaggerui
+  
+  # Write logs to file
+  kportforward --log-file ./kportforward.log
+  
+  # Production setup with logging
+  kportforward --grpcui --swaggerui --log-file /var/log/kportforward.log
+
+  # Performance profiling
+  kportforward profile --cpuprofile=cpu.prof --duration=30s`,
 		Run: runPortForward,
 	}
 )
@@ -41,7 +57,7 @@ func main() {
 	// Add CLI flags
 	rootCmd.Flags().BoolVar(&enableGRPCUI, "grpcui", false, "Enable gRPC UI for RPC services")
 	rootCmd.Flags().BoolVar(&enableSwaggerUI, "swaggerui", false, "Enable Swagger UI for REST services")
-	rootCmd.Flags().StringVar(&logFile, "log-file", "", "Write logs to specified file (default: stdout)")
+	rootCmd.Flags().StringVar(&logFile, "log-file", "", "Write logs to file instead of stdout (e.g., --log-file ./app.log)")
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",

@@ -302,6 +302,64 @@ go build -o bin/kportforward ./cmd/kportforward
 - **Performance Issues**: Use `kportforward profile` for CPU/memory analysis
 - **Benchmark Failures**: Run `go test -bench=. -benchmem ./...` to verify optimizations
 
+### Testing kportforward Service
+
+When testing kportforward functionality, especially after configuration changes:
+
+#### Quick Service Test
+```bash
+# Test for 30 seconds with logging (background mode)
+timeout 30s ./bin/kportforward --log-file /tmp/test.log || echo "Test completed"
+
+# Check for restart failures (should be 0)
+grep -c "Restarting failed service" /tmp/test.log
+
+# View startup logs
+head -30 /tmp/test.log
+
+# View any errors
+grep -i "error\|failed" /tmp/test.log
+```
+
+#### Manual Port-Forward Testing
+```bash
+# Test individual service connectivity
+kubectl port-forward -n catio-data-extraction service/architecture-inventory 50100:80 &
+sleep 3
+nc -zv localhost 50100  # Should succeed
+pkill -f "kubectl port-forward"
+
+# Test with different services
+kubectl port-forward -n flyte service/flyteconsole 8088:80 &
+sleep 3
+nc -zv localhost 8088
+pkill -f "kubectl port-forward"
+```
+
+#### Configuration Validation
+```bash
+# Verify Kubernetes connectivity
+kubectl config current-context
+kubectl get nodes
+kubectl get services -n catio-data-extraction -n flyte
+
+# Check service ports match config
+kubectl get service architecture-inventory -n catio-data-extraction -o jsonpath='{.spec.ports[0]}'
+kubectl get service flyteconsole -n flyte -o jsonpath='{.spec.ports[0]}'
+```
+
+#### Common Test Scenarios
+- **After Config Changes**: Rebuild and run 30-second test to ensure no restart loops
+- **Port Conflicts**: Start multiple instances to test port resolution  
+- **Grace Period**: Services should not restart within first 5 seconds of startup
+- **Health Checks**: TCP connectivity should work for all configured ports
+
+#### Expected Behavior
+- All 18 services start successfully within first few seconds
+- No "Restarting failed service" messages after grace period
+- Services maintain "Running" status throughout test duration
+- Clean shutdown with all services stopped properly
+
 ### Development Tips
 - **Use Git Hooks**: Run `./scripts/install-hooks.sh` for automatic formatting
 - **Test Early**: Write tests before implementing features
