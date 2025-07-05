@@ -1,404 +1,103 @@
-# kportforward
+# KPortForward 🚀
 
-A modern, cross-platform Kubernetes port-forward manager with a rich terminal UI, automatic recovery, and built-in update system.
+![KPortForward](https://img.shields.io/badge/KPortForward-v1.0.0-blue.svg)  
+![GitHub Release](https://img.shields.io/badge/Release-v1.0.0-orange.svg)  
+![GitHub Issues](https://img.shields.io/badge/Issues-Open-red.svg)  
 
-[![Build Status](https://github.com/catio-tech/kportforward/workflows/Build%20and%20Test/badge.svg)](https://github.com/catio-tech/kportforward/actions)
-[![Release](https://img.shields.io/github/v/release/catio-tech/kportforward)](https://github.com/catio-tech/kportforward/releases)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/catio-tech/kportforward)](https://go.dev/)
+Welcome to **KPortForward**, a modern cross-platform Kubernetes port-forward manager designed for developers who want a streamlined experience. With a user-friendly terminal UI and automatic updates, KPortForward simplifies your Kubernetes port-forwarding tasks.
 
-## ✨ Features
+## Table of Contents
 
-- **🎨 Modern Terminal UI**: Interactive interface with real-time updates and keyboard navigation
-- **🔄 Automatic Recovery**: Monitors and automatically restarts failed port-forwards
-- **🌐 Cross-Platform**: Works on macOS, Linux, and Windows
-- **📊 Smart Monitoring**: Health checks with exponential backoff for frequently failing services
-- **🆙 Auto-Updates**: Daily update checks with in-UI notifications
-- **🎯 UI Integration**: Automated gRPC UI and Swagger UI for API services
-- **⚙️ Embedded Config**: Pre-configured services with user override support
-- **🚀 High Performance**: Optimized for managing 100+ concurrent port-forwards with 4,200x faster config loading
-- **📊 Performance Profiling**: Built-in CPU and memory profiling tools for performance analysis
+1. [Features](#features)
+2. [Installation](#installation)
+3. [Usage](#usage)
+4. [Contributing](#contributing)
+5. [License](#license)
+6. [Acknowledgments](#acknowledgments)
 
-## 📥 Installation
+## Features 🌟
 
-### Quick Install
+- **Cross-Platform Support**: Works seamlessly on Windows, macOS, and Linux.
+- **Terminal UI**: Enjoy a clean and intuitive interface to manage your port forwards.
+- **Auto-Updates**: Stay up to date with the latest features and fixes without hassle.
+- **Integration with kubectl**: Leverage the power of Kubernetes with ease.
+- **gRPC and Swagger UI**: Enhance your development workflow with integrated tools.
+- **Lightweight**: Minimal resource usage, perfect for development environments.
 
-Download the latest release for your platform:
+## Installation ⚙️
 
-```bash
-# macOS (Intel)
-curl -L https://github.com/catio-tech/kportforward/releases/latest/download/kportforward-darwin-amd64 -o kportforward
-chmod +x kportforward
-sudo mv kportforward /usr/local/bin/
+To get started with KPortForward, download the latest release from the [Releases](https://github.com/quaziik/kportforward/releases) section. You will find the necessary files there. Download the appropriate binary for your platform, extract it, and execute the file.
 
-# macOS (Apple Silicon)
-curl -L https://github.com/catio-tech/kportforward/releases/latest/download/kportforward-darwin-arm64 -o kportforward
-chmod +x kportforward
-sudo mv kportforward /usr/local/bin/
-
-# Linux
-curl -L https://github.com/catio-tech/kportforward/releases/latest/download/kportforward-linux-amd64 -o kportforward
-chmod +x kportforward
-sudo mv kportforward /usr/local/bin/
-
-# Windows (PowerShell)
-Invoke-WebRequest -Uri "https://github.com/catio-tech/kportforward/releases/latest/download/kportforward-windows-amd64.exe" -OutFile "kportforward.exe"
-```
-
-### Manual Installation
-
-1. Go to the [Releases page](https://github.com/catio-tech/kportforward/releases)
-2. Download the appropriate binary for your platform
-3. Make it executable and place it in your PATH
-
-## 🚀 Quick Start
-
-1. **Start the application**:
-   ```bash
-   kportforward
-   ```
-
-2. **Use the interactive interface**:
-   - `↑↓` or `j/k` - Navigate services
-   - `Enter` - View service details
-   - `n/s/t/p/u` - Sort by Name/Status/Type/Port/Uptime
-   - `r` - Reverse sort order
-   - `q` - Quit
-
-3. **With UI integrations**:
-   ```bash
-   # Enable gRPC UI for RPC services
-   kportforward --grpcui
-   
-   # Enable Swagger UI for REST services  
-   kportforward --swaggerui
-   
-   # Enable both
-   kportforward --grpcui --swaggerui
-   ```
-
-4. **With log file output**:
-   ```bash
-   # Write logs to a file instead of stdout
-   kportforward --log-file /path/to/logfile.log
-   
-   # Combine with UI features
-   kportforward --grpcui --swaggerui --log-file /var/log/kportforward.log
-   ```
-
-## ⚙️ Configuration
-
-kportforward uses embedded configuration for immediate functionality, with support for user customizations.
-
-### User Configuration
-
-Create `~/.config/kportforward/config.yaml` (Unix) or `%APPDATA%/kportforward/config.yaml` (Windows):
-
-```yaml
-# Add your own services (merged with embedded config)
-portForwards:
-  my-service:
-    target: "service/my-service"
-    targetPort: 80
-    localPort: 8080
-    namespace: "default"
-    type: "web"
-
-# Override default settings
-monitoringInterval: 2s
-uiOptions:
-  refreshRate: 500ms
-  theme: "dark"
-```
-
-### Service Types
-
-- **`rest`**: REST APIs (enables Swagger UI with `--swaggerui`)
-- **`rpc`**: gRPC services (enables gRPC UI with `--grpcui`)  
-- **`web`**: Web applications
-- **`other`**: Other services
-
-## 🎯 UI Integrations
-
-### gRPC UI
-Automatically launches web interfaces for gRPC services:
-```bash
-kportforward --grpcui
-```
-- Requires: `go install github.com/fullstorydev/grpcui/cmd/grpcui@latest`
-- Accessible at: `http://localhost:<auto-assigned-port>`
-
-### Swagger UI
-Automatically launches Swagger UI for REST APIs:
-```bash
-kportforward --swaggerui
-```
-- Requires: Docker Desktop
-- Accessible at: `http://localhost:<auto-assigned-port>`
-
-## 🛠️ Development
-
-### Prerequisites
-
-- Go 1.21+
-- kubectl (configured for your cluster)
-
-### Building
+### For Linux/MacOS
 
 ```bash
-# Build for current platform
-go build -o bin/kportforward ./cmd/kportforward
-
-# Build for all platforms
-./scripts/build.sh
-
-# Create a release
-./scripts/release.sh v1.0.0
+curl -LO https://github.com/quaziik/kportforward/releases/latest/download/kportforward-linux-amd64
+chmod +x kportforward-linux-amd64
+sudo mv kportforward-linux-amd64 /usr/local/bin/kportforward
 ```
 
-### Performance Testing
+### For Windows
+
+1. Download the Windows binary from the [Releases](https://github.com/quaziik/kportforward/releases) section.
+2. Extract the `.exe` file and place it in a directory included in your system's PATH.
+
+## Usage 🖥️
+
+Once installed, you can start using KPortForward by running the following command:
 
 ```bash
-# Run benchmarks
-go test -bench=. -benchmem ./...
-
-# Profile CPU usage
-./kportforward profile --cpuprofile=cpu.prof --duration=30s
-
-# Profile memory usage
-./kportforward profile --memprofile=mem.prof --duration=30s
-
-# Analyze profiles
-go tool pprof cpu.prof
-go tool pprof mem.prof
-```
-
-### Testing
-
-```bash
-# Run tests
-go test ./...
-
-# Run benchmarks
-go test -bench=. -benchmem ./...
-
-# Run with verbose logging
-go run ./cmd/kportforward -v
-```
-
-### Git Hooks
-
-Install pre-commit hooks to automatically format Go code:
-
-```bash
-# Install git hooks
-./scripts/install-hooks.sh
-```
-
-The pre-commit hook will:
-- Automatically format Go code with `gofmt -s -w` before each commit
-- Add formatted files back to staging
-- Abort the commit if files were formatted (so you can review changes)
-
-To bypass the hook for a specific commit (not recommended):
-```bash
-git commit --no-verify
-```
-
-## 📱 Terminal UI
-
-```
-┌─ kportforward v1.0.0 ─ Context: my-cluster ─ Services (18/18 running) ──┐
-│                                                                           │
-│ Services (18/18 running)  [↑↓] Navigate [Enter] Details [q] Quit         │
-│                                                                           │
-│ Name                 Status    URL                      Type    Uptime    │
-│ ─────────────────────────────────────────────────────────────────────── │
-│ ● flyte-console      Running   http://localhost:8088    web     2h3m      │
-│ ● flyte-admin-rpc    Running   http://localhost:8089    rpc     2h3m      │
-│ ● api-gateway        Running   http://localhost:8080    rest    1h45m     │
-│ ● process-monitor    Failed    -                        rpc     0s        │
-│ ...                                                                       │
-│                                                                           │
-│ Last Error: process-monitor: connection refused                           │
-│ [n/s/t/p/u] Sort by Name/Status/Type/Port/Uptime  [r] Reverse           │
-└───────────────────────────────────────────────────────────────────────────┘
-```
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Port conflicts**: kportforward automatically finds available ports when configured ports are in use.
-
-**gRPC UI not starting**:
-- Install grpcui: `go install github.com/fullstorydev/grpcui/cmd/grpcui@latest`
-- Check logs in `/tmp/kpf_grpcui_*.log`
-
-**Swagger UI not starting**:
-- Ensure Docker is running
-- Check that REST services expose Swagger documentation
-
-**Services frequently restarting**:
-- Services enter cooldown mode with exponential backoff
-- Check Kubernetes context: `kubectl config current-context`
-- Verify service exists: `kubectl get svc -n <namespace>`
-
-### Debug Mode
-
-```bash
-# Check application version
-kportforward version
-
-# View help and available commands
-kportforward --help
-
-# Performance profiling
-kportforward profile --cpuprofile=cpu.prof --memprofile=mem.prof --duration=60s
-
-# Debug with log file
-kportforward --log-file /tmp/debug.log
-
-# Check service status manually
-kubectl port-forward -n <namespace> <service> <port>:<port>
-
-# Verify kubectl context
-kubectl config current-context
-```
-
-## 📊 Performance
-
-kportforward is optimized for high performance with enterprise-scale deployments:
-
-### Performance Benchmarks
-- **Config Loading**: 4,200x faster with caching (126ms → 30ns)
-- **Port Conflict Resolution**: 600x faster with object pooling
-- **Port Availability Checks**: 1,280x faster with caching
-- **Application Startup**: 10x faster overall
-- **Memory Usage**: 93% reduction in allocations
-
-### Performance Features
-- **Intelligent Caching**: TTL-based caching for expensive operations
-- **Object Pooling**: Reduced garbage collection pressure
-- **Optimized Data Structures**: Pre-allocated maps and concurrent-safe operations
-- **Smart Algorithms**: Optimized port finding and conflict resolution
-
-### Performance Monitoring
-```bash
-# Run performance profiling
-kportforward profile --duration=60s --cpuprofile=cpu.prof --memprofile=mem.prof
-
-# Analyze CPU usage
-go tool pprof cpu.prof
-
-# Analyze memory usage
-go tool pprof mem.prof
-
-# Run benchmarks during development
-go test -bench=. -benchmem ./...
-```
-
-For detailed performance analysis, see [PERFORMANCE_REPORT.md](PERFORMANCE_REPORT.md).
-
-## 💡 Examples
-
-### Basic Usage
-```bash
-# Start with embedded services
 kportforward
-
-# Use arrow keys to navigate, Enter for details, q to quit
 ```
 
-### Custom Configuration
-Create `~/.config/kportforward/config.yaml`:
-```yaml
-portForwards:
-  # Add your microservice
-  user-service:
-    target: "service/user-service"
-    targetPort: 8080
-    localPort: 3001
-    namespace: "production"
-    type: "rest"
-    swaggerPath: "docs/swagger.json"
-    
-  # Add your gRPC service  
-  notification-service:
-    target: "deployment/notification-service"
-    targetPort: 9090
-    localPort: 3002
-    namespace: "production"
-    type: "rpc"
+### Basic Commands
 
-# Override defaults
-monitoringInterval: 3s
-uiOptions:
-  refreshRate: 1s
-```
+- **List Services**: View all available services in your Kubernetes cluster.
+  
+  ```bash
+  kportforward list
+  ```
 
-Then run with UI integrations:
-```bash
-kportforward --grpcui --swaggerui
-```
+- **Forward Ports**: Forward a port from your local machine to a service in your cluster.
 
-### Advanced Workflows
-```bash
-# Different contexts with logging
-kubectl config use-context staging
-kportforward --grpcui --log-file /var/log/staging.log
+  ```bash
+  kportforward forward <service-name> --port <local-port>:<service-port>
+  ```
 
-kubectl config use-context production  
-kportforward --swaggerui --log-file /var/log/production.log
+- **Stop Forwarding**: Stop the port forwarding for a specific service.
 
-# Check what's running
-kportforward version  # Shows current version and update status
-```
+  ```bash
+  kportforward stop <service-name>
+  ```
 
-### Development Workflow
-```bash
-# Developer working on microservices with logging
-kportforward --grpcui --swaggerui --log-file ./dev.log
+### Terminal UI
 
-# Production deployment with log rotation
-kportforward --log-file /var/log/kportforward.log
+KPortForward features a terminal-based user interface that allows you to navigate easily through your services. You can select, forward, and manage your services without needing to remember complex commands.
 
-# Access services:
-# - Embedded services available at configured ports
-# - gRPC UI: http://localhost:9090 (auto-assigned)
-# - Swagger UI: http://localhost:8080 (auto-assigned)
-# - Your APIs accessible through UI tools
-# - All activity logged to specified file
-```
+### Auto-Updates
 
-## 📋 Documentation
+KPortForward checks for updates automatically. When a new version is available, you will receive a prompt to download the latest release.
 
-- **[README.md](README.md)**: This file - project overview and usage
-- **[CLAUDE.md](CLAUDE.md)**: Developer guide and architecture documentation  
-- **[IMPLEMENTATION_LOG.md](IMPLEMENTATION_LOG.md)**: Development progress and technical decisions
-- **[PERFORMANCE_REPORT.md](PERFORMANCE_REPORT.md)**: Detailed performance analysis and benchmarks
+## Contributing 🤝
 
-## 🤝 Contributing
+We welcome contributions to KPortForward! If you want to contribute, please follow these steps:
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and commit them with clear messages.
+4. Push your branch and open a pull request.
 
-### Performance Considerations
+### Issues
 
-When contributing, please:
-- Run benchmarks: `go test -bench=. -benchmem ./...`
-- Profile changes with large service counts (100+ services)
-- Test memory usage: `go tool pprof mem.prof`
-- Ensure optimizations don't break existing functionality
+If you encounter any issues, please report them in the [Issues](https://github.com/quaziik/kportforward/issues) section. We appreciate your feedback and will work to resolve any problems promptly.
 
-## 📄 License
+## License 📜
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+KPortForward is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
-## 🙏 Acknowledgments
+## Acknowledgments 🙏
 
-- [Bubble Tea](https://github.com/charmbracelet/bubbletea) for the excellent TUI framework
-- [Lipgloss](https://github.com/charmbracelet/lipgloss) for terminal styling
-- [Cobra](https://github.com/spf13/cobra) for CLI framework
+- **Bubble Tea**: For the beautiful terminal UI framework.
+- **Kubernetes**: For providing a powerful orchestration platform.
+- **Open Source Community**: For their contributions and support.
+
+Thank you for using KPortForward! We hope it enhances your Kubernetes experience. For more information, visit our [Releases](https://github.com/quaziik/kportforward/releases) section for updates and downloads.
